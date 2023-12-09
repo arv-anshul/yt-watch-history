@@ -31,7 +31,10 @@ else:
         if not st.form_submit_button(use_container_width=True):
             st.stop()
         if df_buffer is None:
-            st.error("Error while uploading the file.", icon="🧐")
+            st.error(
+                "Error while uploading the file. Upload JSON file properly.",
+                icon="🧐",
+            )
             st.stop()
 
     with st.status("Loading the data into app...", expanded=True) as status:
@@ -100,7 +103,7 @@ if sl_analysis == _options[0]:
     # No. Of Channels You Watches Frequently
     threshold = 7
     freq_ch_num = (
-        df["channelName"].value_counts().filter(pl.col("counts") > threshold).height
+        df["channelTitle"].value_counts().filter(pl.col("counts") > threshold).height
     )
     fig = px.pie(
         values=[freq_ch_num, df.height - freq_ch_num],
@@ -121,10 +124,10 @@ if sl_analysis == _options[0]:
     r.plotly_chart(fig, True)
 
     # Top 7 Channel
-    temp = df["channelName"].value_counts(sort=True).head(7)
+    temp = df["channelTitle"].value_counts(sort=True).head(7)
     fig = px.bar(
         temp,
-        "channelName",
+        "channelTitle",
         "counts",
         title="Top 7 Channel You Have Watched",
     )

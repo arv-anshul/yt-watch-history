@@ -31,6 +31,7 @@ class IngestYtHistory:
             pl.col("titleUrl").str.replace(
                 "https://www.youtube.com/watch?v=", "https://youtu.be/", literal=True
             ),
+            pl.col("titleUrl").str.extract(r"v=(.?*)").alias("videoId"),
         )
 
         # details
@@ -46,9 +47,9 @@ class IngestYtHistory:
             )
 
         # subtitles
-        # > Extract channelName & channelUrl
+        # > Extract channelTitle & channelUrl
         df = df.with_columns(pl.col("subtitles").list.get(0)).with_columns(
-            pl.col("subtitles").struct.field("name").alias("channelName"),
+            pl.col("subtitles").struct.field("name").alias("channelTitle"),
             pl.col("subtitles")
             .struct.field("url")
             .str.strip_prefix("https://www.youtube.com/channel/")

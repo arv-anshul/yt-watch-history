@@ -38,13 +38,13 @@ def get_frequent_ids(
         pl.col("isShorts") == False,  # noqa: E712
     )
     freq_channels = (
-        df.drop_nulls("channelName")
-        .group_by("channelName")
+        df.drop_nulls("channelTitle")
+        .group_by("channelTitle")
         .count()
-        .filter(pl.col("count") > 10)["channelName"]
+        .filter(pl.col("count") > 10)["channelTitle"]
     )
     freq_ids = (
-        df.filter(pl.col("channelName").is_in(freq_channels))["titleUrl"]
+        df.filter(pl.col("channelTitle").is_in(freq_channels))["titleUrl"]
         .str.extract(r"be/(.?+)")
         .to_list()
     )

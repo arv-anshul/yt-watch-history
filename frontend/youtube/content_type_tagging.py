@@ -28,7 +28,7 @@ class ContentTypeTagging:
         df = pl.read_json(C.CONTENT_TYPE_TAGGED_CHANNEL_DATASET_PATH)
         tagged_ch_df = pl.DataFrame(
             {
-                "channelName": df.columns,
+                "channelTitle": df.columns,
                 "contentType": df.transpose().to_series(),
             }
         )
@@ -45,7 +45,7 @@ class ContentTypeTagging:
             history_df = history_df.filter(pl.col("isShorts") == use_shorts)
 
         # Merge both dataset by the channel names
-        df = tagged_ch_df.join(history_df, on="channelName").select(
+        df = tagged_ch_df.join(history_df, on="channelTitle").select(
             "title", "contentType"
         )
         return df
