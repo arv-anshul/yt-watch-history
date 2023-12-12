@@ -35,7 +35,8 @@ def get_frequent_ids(
 
     df = df.filter(
         pl.col("time") > delta,
-        pl.col("isShorts") == False,  # noqa: E712
+        pl.col("isShorts", "fromYtSearchHistActivity", "fromWebAppActivity")
+        == False,  # noqa: E712
     )
     freq_channels = (
         df.drop_nulls("channelTitle")
@@ -44,8 +45,27 @@ def get_frequent_ids(
         .filter(pl.col("count") > 10)["channelTitle"]
     )
     freq_ids = (
-        df.filter(pl.col("channelTitle").is_in(freq_channels))["titleUrl"]
-        .str.extract(r"be/(.?+)")
+        df.filter(pl.col("channelTitle").is_in(freq_channels))["videoId"]
+        .unique()
         .to_list()
     )
     return freq_ids
+
+
+def delete_user_data_button():
+    if st.sidebar.button("🗂️ Delete User Data", use_container_width=True):
+        all_user_data_paths = (
+            C.INGESTED_YT_HISTORY_DATA_PATH,
+            C.CONTENT_TYPE_VEC_PATH,
+            C.CONTENT_TYPE_LABEL_ENC_PATH,
+            C.CONTENT_TYPE_MODEL_PATH,
+            C.VIDEO_DETAILS_JSON_PATH,
+        )
+        [i.unlink() for i in all_user_data_paths if i.exists()]
+
+        # Clear streamlit's caches
+        st.cache_resource.clear()
+        st.cache_data.clear()
+
+        # Rerun the app
+        st.rerun()

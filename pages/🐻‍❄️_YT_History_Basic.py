@@ -62,20 +62,7 @@ else:
     st.stop()
 
 # Button to delete all the user's data
-if st.sidebar.button("🗂️ Delete User Data", use_container_width=True):
-    [
-        i.unlink()
-        for i in (
-            C.INGESTED_YT_HISTORY_DATA_PATH,
-            C.CONTENT_TYPE_VEC_PATH,
-            C.CONTENT_TYPE_LABEL_ENC_PATH,
-            C.CONTENT_TYPE_MODEL_PATH,
-        )
-        if i.exists()
-    ]
-    st.cache_resource.clear()
-    st.cache_data.clear()
-    st.rerun()
+st_utils.delete_user_data_button()
 
 _options = [
     "Basic Info About Your History Data",
