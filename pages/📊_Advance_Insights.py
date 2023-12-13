@@ -17,6 +17,7 @@ import httpx
 import numpy as np
 import polars as pl
 import streamlit as st
+from plotly import express as px
 
 from api._utils import batch_iter
 from api.configs import API_HOST_URL
@@ -24,6 +25,7 @@ from api.models.youtube import YtChannelVideoData
 from frontend import st_utils
 from frontend.configs import YT_API_KEY
 from frontend.constants import VIDEO_DETAILS_JSON_PATH
+from frontend.youtube import VideoDetails
 
 st.set_page_config("Advance Insights", "😃", "wide", "expanded")
 DETAILS_ABOUT_PAGE = """
@@ -215,4 +217,85 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
 # Button to delete all the user's data
 st_utils.delete_user_data_button()
 
-st.info("Cooking some insights for you with ❤️.", icon="🧑‍🍳")
+mdf = VideoDetails().initiate()
+
+_options = (
+    "Basic Insights",
+    "User's Watchtime Behavior Analysis",
+    "User's Behavior on Videos Duration",
+)
+sl_analysis = st.selectbox("Select Analysis", options=_options)
+sl_year = st.selectbox(
+    "Select Year",
+    [None] + mdf["year"].unique().sort(descending=True).to_list(),
+)
+l, r = st.columns(2)
+
+# Filtered DataFrame
+mdf = mdf.filter(pl.col("year") == sl_year) if sl_year else mdf
+
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
+# Basic Analysis
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
+if sl_analysis == _options[0]:
+    fig = px.sunburst(
+        mdf.group_by(["channelTitle", "categoryName"]).count(),
+        path=["categoryName", "channelTitle"],
+        values="count",
+        title="Video Distribution by Category and Channel",
+    )
+    l.plotly_chart(fig, True)
+
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
+# Watchtime Behavior
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
+if sl_analysis == _options[1]:
+    fig = px.sunburst(
+        mdf.group_by(["daytime", "categoryName"]).count(),
+        path=["daytime", "categoryName"],
+        values="count",
+        title="User's watching behavior during daytime",
+    )
+    l.plotly_chart(fig, True)
+
+    fig = px.sunburst(
+        mdf.group_by(["month", "categoryName"]).count(),
+        path=["month", "categoryName"],
+        values="count",
+        title="Watching patterns for months.",
+    )
+    r.plotly_chart(fig, True)
+
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
+# Videos Duration Behavior
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
+if sl_analysis == _options[2]:
+    fig = px.pie(
+        mdf["isShorts"]
+        .map_elements(lambda x: "Shorts Video" if x else "Long Videos")
+        .value_counts(),
+        names="isShorts",
+        values="counts",
+        title="Ratio between Shorts and Long Form Video",
+    )
+    l.plotly_chart(fig, True)
+
+    fig = px.sunburst(
+        mdf.group_by("categoryName", "channelTitle").agg(
+            pl.col("durationInSec").mean().cast(int).alias("durationMean"),
+        ),
+        path=["categoryName", "channelTitle"],
+        values="durationMean",
+        title="Average Video Duration by Category and Channel",
+    )
+    r.plotly_chart(fig, True)
+
+    fig = px.sunburst(
+        mdf.group_by("categoryName", "channelTitle").agg(
+            pl.col("isShorts").sum(),
+        ),
+        path=["categoryName", "channelTitle"],
+        values="isShorts",
+        title="Distribution of Shorts by Channels",
+    )
+    l.plotly_chart(fig, True)
