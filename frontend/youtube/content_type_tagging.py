@@ -25,14 +25,12 @@ class ContentTypeTagging:
 
     @classmethod
     def get_content_type_tagged_channel_df(cls) -> pl.DataFrame:
-        df = pl.read_json(C.CONTENT_TYPE_TAGGED_CHANNEL_DATASET_PATH)
-        tagged_ch_df = pl.DataFrame(
-            {
-                "channelTitle": df.columns,
-                "contentType": df.transpose().to_series(),
-            }
+        df = pl.read_json(C.CONTENT_TYPE_TAGGED_CHANNEL_DATASET_PATH).transpose(
+            include_header=True,
+            header_name="channelTitle",
+            column_names=["contentType"],
         )
-        return tagged_ch_df
+        return df
 
     def merge_dataset(
         self,
