@@ -76,17 +76,15 @@ sl_analysis = st.selectbox("Select Which Type Of Analysis You Want To See 👀",
 # Basic Insights
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 if sl_analysis == _options[0]:
-    # Dataset time range
-    maxt = df["time"].max().date()  # type: ignore
-    mint = df["time"].min().date()  # type: ignore
-    delta = maxt - mint  # type: ignore
-
-    st.write(
-        f"#### Recivied data time range is :red[from {mint: %d %B, %y} to {maxt: %d %B, %y}]."
-    )
-    st.write(f"#### Time Delta of Dataset is :red[{delta.days} Days].")
-
     l, r = st.columns(2)
+
+    # Dataset time range
+    l.metric(
+        "Time Range of Dataset",
+        f'{df["time"].max():%b, %y} — {df["time"].min():%b, %y}',
+    )
+    r.metric("No. of Days of Data Present", df["time"].dt.date().n_unique())
+
     # No. Of Channels You Watches Frequently
     threshold = 7
     freq_ch_num = (
@@ -95,7 +93,7 @@ if sl_analysis == _options[0]:
     fig = px.pie(
         values=[freq_ch_num, df.height - freq_ch_num],
         names=["Frequently Watched Channel", "Non Freq. Channel"],
-        title="No. of Channels You Watches Frequently.",
+        title=f"No. of Channels You Watches Frequently [Threshold={threshold}]",
     )
     l.plotly_chart(fig, True)
 
@@ -111,18 +109,12 @@ if sl_analysis == _options[0]:
     r.plotly_chart(fig, True)
 
     # Top 7 Channel
-    temp = df["channelTitle"].value_counts(sort=True).head(7)
     fig = px.bar(
-        temp,
+        df["channelTitle"].value_counts(sort=True).head(7),
         "channelTitle",
         "counts",
         title="Top 7 Channel You Have Watched",
     )
-    st.plotly_chart(fig, True)
-
-    # ContentType Bar Plot
-    temp = df["contentType"].value_counts(sort=True)
-    fig = px.bar(temp, "contentType", "counts", title="ContentType Bar Plot")
     st.plotly_chart(fig, True)
 
 
@@ -203,8 +195,12 @@ if sl_analysis == _options[1]:
 def generate_cloud():
     vectorizer: TfidfVectorizer = _io.load_object(C.CONTENT_TYPE_VEC_PATH)
     preprocessor = vectorizer.build_preprocessor()
-    filtered_df = df.filter(pl.col("isShorts") == False)  # noqa: E712
-    text = " ".join([preprocessor(s) for s in filtered_df["title"]])
+    title = df.filter(
+        pl.col("isShorts") == False,  # noqa: E712
+    ).select(
+        pl.col("title").str.replace(r"#\w+", ""),
+    )
+    text = " ".join([preprocessor(s) for s in title["title"]])
     cloud = WordCloud(width=800, height=800, stopwords=STOPWORDS).generate(text)
     return cloud
 
@@ -213,7 +209,7 @@ if sl_analysis == _options[2]:
     fig = plt.figure(figsize=(10, 10), facecolor=None)
     plt.imshow(generate_cloud())
     plt.axis("off")
-    plt.title("WorlCloud of Videos Title")
+    plt.title("WorlCloud of Words in Videos Title")
     st.pyplot(fig, True)
 
     # WordCloud of titleTags
@@ -229,7 +225,7 @@ if sl_analysis == _options[2]:
     fig = plt.figure(figsize=(10, 10), facecolor=None)
     plt.imshow(cloud, interpolation="bilinear")
     plt.axis("off")
-    plt.title("WordCloud of Emojis in Titles")
+    plt.title("WordCloud of Tags in Titles")
     st.pyplot(fig, True)
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
@@ -257,3 +253,24 @@ if sl_analysis == _options[3]:
                 f"**`{list(vectorizer.inverse_transform(text_vec)[0])}`**"
             )
             st.write(f"#### :red[Content Type:] **`{content_type[0]}`**")
+
+    l, r = st.columns(2)
+
+    fig = px.pie(
+        df["contentType"].value_counts(sort=True),
+        "contentType",
+        "counts",
+        title="Different ContentType Consumption",
+    )
+    l.plotly_chart(fig, True)
+
+    fig = px.sunburst(
+        df.drop_nulls("channelTitle")
+        .group_by("contentType", "channelTitle")
+        .count()
+        .filter(pl.col("count") > 30),
+        path=["contentType", "channelTitle"],
+        values="count",
+        title="Consumption of Content Type with Channel",
+    )
+    r.plotly_chart(fig, True)
