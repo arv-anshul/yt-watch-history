@@ -41,7 +41,7 @@ async def get_channels(
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> list[YtChannelVideoData]:
     data = await collection.find({"channelId": {"$in": channel_ids}}).to_list(None)
-    if len(data) != 0:
+    if data:
         return data
     raise HTTPException(
         404,
@@ -55,10 +55,12 @@ async def update_channel_video_data(
     data: YtChannelVideoData,
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
-    ch_exists = await collection.find_one({"channelId": data.channelId})
-    if ch_exists:
-        total_ids = list(set(ch_exists["videoIds"]) | set(data.videoIds))
-        if len(total_ids) != len(ch_exists["videoIds"]):
+    existing_channel = await collection.find_one({"channelId": data.channelId})
+    if existing_channel:
+        existing_video_ids = set(existing_channel.get("videoIds", []))
+        new_video_ids = set(data.videoIds)
+        if new_video_ids - existing_video_ids:
+            total_ids = list(existing_video_ids | new_video_ids)
             await collection.update_one(
                 {"channelId": data.channelId},
                 {"$set": {"videoIds": total_ids}},
@@ -73,22 +75,32 @@ async def update_channel_video_data_in_bulk(
     data: list[YtChannelVideoData],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
-    operations = []
+    existing_channels = await collection.find(
+        {"channelId": {"$in": [ch_data.channelId for ch_data in data]}}
+    ).to_list(None)
+    existing_channels_dict = {
+        channel["channelId"]: channel for channel in existing_channels
+    }
+
+    bulk_operations = []
     for ch_data in data:
-        ch_exists = await collection.find_one({"channelId": ch_data.channelId})
-        if ch_exists:
-            total_ids = list(set(ch_exists["videoIds"]) | set(ch_data.videoIds))
-            if len(total_ids) != len(ch_exists["videoIds"]):
-                operations.append(
+        existing_channel = existing_channels_dict.get(ch_data.channelId)
+        if existing_channel:
+            existing_video_ids = set(existing_channel.get("videoIds", []))
+            new_video_ids = set(ch_data.videoIds)
+            if new_video_ids - existing_video_ids:
+                total_ids = list(existing_video_ids | new_video_ids)
+                bulk_operations.append(
                     UpdateOne(
                         {"channelId": ch_data.channelId},
                         {"$set": {"videoIds": total_ids}},
                     )
                 )
         else:
-            operations.append(InsertOne(ch_data.model_dump()))
-    if operations:
-        await collection.bulk_write(operations)
+            bulk_operations.append(InsertOne(ch_data.model_dump()))
+
+    if bulk_operations:
+        await collection.bulk_write(bulk_operations)
 
 
 @db_yt_channel_video_route.put(
@@ -103,19 +115,30 @@ async def update_using_video_details(
 ) -> None:
     if not details:
         return
+    channel_video_data = YtChannelVideoData.from_video_details(details)
+
+    existing_channels = await collection.find(
+        {"channelId": {"$in": [i.channelId for i in channel_video_data]}}
+    ).to_list(None)
+    existing_channels_dict = {
+        channel["channelId"]: channel for channel in existing_channels
+    }
 
     operations = []
-    for i in YtChannelVideoData.from_video_details(details):
+    for i in channel_video_data:
         filter_query = {"channelId": i.channelId}
-        ch_exists = await collection.find_one(filter_query)
-        if ch_exists:
-            total_ids = list(set(i.videoIds) | set(ch_exists["videoIds"]))
-            if len(total_ids) != len(ch_exists["videoIds"]):
+        existing_channel = existing_channels_dict.get(i.channelId)
+        if existing_channel:
+            existing_video_ids = set(existing_channel.get("videoIds", []))
+            new_video_ids = set(i.videoIds)
+            if new_video_ids - existing_video_ids:
+                total_ids = list(existing_video_ids | new_video_ids)
                 operations.append(
                     UpdateOne(filter_query, {"$set": {"videoIds": total_ids}})
                 )
         else:
             operations.append(InsertOne(i.model_dump()))
+
     if operations:
         await collection.bulk_write(operations)
 
@@ -130,10 +153,12 @@ async def exclude_present_ids(
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> list[str]:
     ids_from_data = {j for i in data for j in i.videoIds}
-    ch_data = await collection.find(
-        {"channelId": {"$in": [i.channelId for i in data]}}
-    ).to_list(None)
-    ids_from_db = {j for i in ch_data for j in i["videoIds"]}
+    pipeline = [
+        {"$match": {"channelId": {"$in": [i.channelId for i in data]}}},
+        {"$group": {"_id": None, "videoIds": {"$addToSet": "$videoIds"}}},
+    ]
+    ch_data = await collection.aggregate(pipeline).to_list(None)
+    ids_from_db = {j for i in ch_data[0]["videoIds"] for j in i} if ch_data else set()
     id_not_present = list(ids_from_data - ids_from_db)
     if id_not_present:
         return id_not_present

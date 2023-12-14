@@ -14,31 +14,32 @@ yt_video_route = APIRouter(prefix="/video", tags=["video"])
 
 async def fetch_one_video(
     key: str,
-    id: str,
+    ids: str,
     *,
     part: Optional[str] = None,
 ) -> list[YtVideoDetails]:
     part = "snippet,contentDetails" if part is None else part
-    url = f"https://www.googleapis.com/youtube/v3/videos?part={part}&id={id}&key={key}"
+    url = f"https://www.googleapis.com/youtube/v3/videos?part={part}&id={ids}&key={key}"
 
-    r = httpx.get(url)
-    if r.status_code == 400:
-        raise HTTPException(400, {"message": "Wrong API key.", "apiKey": key})
-    elif r.status_code != 200:
-        raise HTTPException(
-            400,
-            {
-                "message": "Error fetching data from YouTube API.",
-                "id": id,
-                "statusCode": r.status_code,
-                "YtApiResponse": r.json(),
-            },
-        )
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        if response.status_code == 400:
+            raise HTTPException(400, {"message": "Wrong API key.", "apiKey": key})
+        elif response.status_code != 200:
+            raise HTTPException(
+                400,
+                {
+                    "message": "Error fetching data from YouTube API.",
+                    "ids": ids,
+                    "statusCode": response.status_code,
+                    "YtApiResponse": response.json(),
+                },
+            )
 
-    data = r.json()["items"]
+        data = response.json()["items"]
     if not data:
         raise HTTPException(204, {"message": "No data after request."})
-    return await asyncio.gather(*[YtVideoDetails.from_dict(i) for i in data])
+    return await YtVideoDetails.from_dicts(data)
 
 
 @yt_video_route.get(

@@ -77,13 +77,22 @@ async def update_video_in_bulk(
     force_update: bool = False,
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ):
-    operations = []
-    for i in details:
-        video_exists = await collection.find_one({"id": i.id})
-        if video_exists:
-            if force_update:
-                operations.append(UpdateOne({"id": i.id}, {"$set": i.model_dump()}))
+    existing_videos = await collection.find(
+        {"id": {"$in": [i.id for i in details]}}
+    ).to_list(None)
+    existing_video_ids = {video["id"]: video for video in existing_videos}
+
+    bulk_operations = []
+    for video in details:
+        existing_video = existing_video_ids.get(video.id)
+        if existing_video:
+            if force_update is False:
+                continue
+            bulk_operations.append(
+                UpdateOne({"_id": existing_video["_id"]}, {"$set": video.model_dump()})
+            )
         else:
-            operations.append(InsertOne(i.model_dump()))
-    if operations:
-        await collection.bulk_write(operations)
+            bulk_operations.append(InsertOne(video.model_dump()))
+
+    if bulk_operations:
+        await collection.bulk_write(bulk_operations)

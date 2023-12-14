@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from typing import Optional, Self
 
@@ -45,3 +46,7 @@ class YtVideoDetails(BaseModel):
             )
         except KeyError:
             return cls.null(item.get("id"))
+
+    @classmethod
+    async def from_dicts(cls, items: list[dict], /) -> list[Self]:
+        return await asyncio.gather(*[cls.from_dict(i) for i in items])
