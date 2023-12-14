@@ -3,10 +3,10 @@ import calendar
 import numpy as np
 import polars as pl
 import streamlit as st
-import wordcloud
 from matplotlib import pyplot as plt
 from plotly import express as px
 from sklearn.feature_extraction.text import TfidfVectorizer
+from wordcloud import STOPWORDS, WordCloud
 
 import frontend.constants as C
 from frontend import _io, st_utils
@@ -203,22 +203,33 @@ if sl_analysis == _options[1]:
 def generate_cloud():
     vectorizer: TfidfVectorizer = _io.load_object(C.CONTENT_TYPE_VEC_PATH)
     preprocessor = vectorizer.build_preprocessor()
-    tokens = [preprocessor(s) for s in df["title"]]
-
-    cloud = wordcloud.WordCloud(
-        width=800,
-        height=800,
-        stopwords=wordcloud.STOPWORDS,
-        min_font_size=10,
-    ).generate(" ".join(tokens))
+    filtered_df = df.filter(pl.col("isShorts") == False)  # noqa: E712
+    text = " ".join([preprocessor(s) for s in filtered_df["title"]])
+    cloud = WordCloud(width=800, height=800, stopwords=STOPWORDS).generate(text)
     return cloud
 
 
 if sl_analysis == _options[2]:
-    fig = plt.figure(figsize=(8, 12), facecolor=None)
+    fig = plt.figure(figsize=(10, 10), facecolor=None)
     plt.imshow(generate_cloud())
     plt.axis("off")
-    plt.tight_layout(pad=0)
+    plt.title("WorlCloud of Videos Title")
+    st.pyplot(fig, True)
+
+    # WordCloud of titleTags
+    tags_text = " ".join(
+        df["titleTags"]
+        .explode()
+        .drop_nulls()
+        .str.strip_prefix("#")
+        .str.to_lowercase()
+        .to_list()
+    )
+    cloud = WordCloud(height=800, width=800).generate(tags_text)
+    fig = plt.figure(figsize=(10, 10), facecolor=None)
+    plt.imshow(cloud, interpolation="bilinear")
+    plt.axis("off")
+    plt.title("WordCloud of Emojis in Titles")
     st.pyplot(fig, True)
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
