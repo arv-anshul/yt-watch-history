@@ -15,18 +15,6 @@ async def get_collection() -> AsyncIOMotorCollection:
     return collection
 
 
-@db_yt_video_route.get("/")
-@APIExceptionResponder
-async def get_one_yt_video(
-    id: str,
-    collection: AsyncIOMotorCollection = Depends(get_collection),
-) -> YtVideoDetails:
-    details = await collection.find_one({"id": id})
-    if details:
-        return YtVideoDetails(**details)
-    raise HTTPException(404, {"message": "videoId not found in database.", "id": id})
-
-
 @db_yt_video_route.post("/")
 @APIExceptionResponder
 async def get_many_yt_videos(
@@ -37,33 +25,6 @@ async def get_many_yt_videos(
     if details:
         return [YtVideoDetails(**i) for i in details]
     raise HTTPException(404, {"message": "Details not found in database.", "id": ids})
-
-
-@db_yt_video_route.put(
-    "/",
-    status_code=204,
-    description="Insert or Update the video details.",
-)
-@APIExceptionResponder
-async def update_one_video(
-    details: YtVideoDetails,
-    force_update: bool = False,
-    collection: AsyncIOMotorCollection = Depends(get_collection),
-):
-    video_exists = collection.find_one({"id": details.id})
-    if video_exists:
-        if force_update is False:
-            raise HTTPException(
-                409,
-                {
-                    "message": "videoId already exists in the database.",
-                    "id": details.id,
-                    "force_update": False,
-                },
-            )
-        await collection.update_one({"id": details.id}, {"$set": details.model_dump()})
-    else:
-        await collection.insert_one(details.model_dump())
 
 
 @db_yt_video_route.put(

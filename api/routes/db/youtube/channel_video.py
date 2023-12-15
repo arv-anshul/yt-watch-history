@@ -19,21 +19,6 @@ async def get_collection() -> AsyncIOMotorCollection:
     return collection
 
 
-@db_yt_channel_video_route.get("/")
-@APIExceptionResponder
-async def get_channel(
-    channel_id: str,
-    collection: AsyncIOMotorCollection = Depends(get_collection),
-) -> YtChannelVideoData:
-    data = await collection.find_one({"channelId": channel_id})
-    if data is None:
-        raise HTTPException(
-            404,
-            {"message": "channelId not found in database.", "channelId": channel_id},
-        )
-    return data
-
-
 @db_yt_channel_video_route.post("/")
 @APIExceptionResponder
 async def get_channels(
@@ -47,26 +32,6 @@ async def get_channels(
         404,
         {"message": "Details not found for channel_ids.", "channelId": channel_ids},
     )
-
-
-@db_yt_channel_video_route.put("/", status_code=204)
-@APIExceptionResponder
-async def update_channel_video_data(
-    data: YtChannelVideoData,
-    collection: AsyncIOMotorCollection = Depends(get_collection),
-) -> None:
-    existing_channel = await collection.find_one({"channelId": data.channelId})
-    if existing_channel:
-        existing_video_ids = set(existing_channel.get("videoIds", []))
-        new_video_ids = set(data.videoIds)
-        if new_video_ids - existing_video_ids:
-            total_ids = list(existing_video_ids | new_video_ids)
-            await collection.update_one(
-                {"channelId": data.channelId},
-                {"$set": {"videoIds": total_ids}},
-            )
-    else:
-        await collection.insert_one(data.model_dump())
 
 
 @db_yt_channel_video_route.put("/bulk", status_code=204)
