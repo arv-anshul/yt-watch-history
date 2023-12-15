@@ -50,16 +50,17 @@ async def fetch_video_details_from_yt_api(
 @APIExceptionResponder
 async def get_videos_details_from_yt_api(
     ids: list[str],
-    n: int = Query(
+    limit: int = Query(
         200,
         description="Maximum No. of Videos Details being Fetch.",
         gt=1,
+        le=400,
     ),
     key: str = YT_API_KEY_AS_API_HEADER,
     part: Optional[str] = None,
 ) -> list[YtVideoDetails]:
     tasks = []
-    for _50_ids in batch_iter(ids[:n], 50):
+    for _50_ids in batch_iter(ids[:limit], 50):
         vids = fetch_video_details_from_yt_api(key, ",".join(_50_ids), part=part)
         tasks.append(vids)
     details = await asyncio.gather(*tasks)
