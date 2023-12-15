@@ -94,9 +94,8 @@ async def update_using_videos_details(
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
     if data:
-        await __update_channels_videos_data(
-            YtChannelVideoData.from_video_details(data), collection
-        )
+        ch_video_data = list(YtChannelVideoData.from_video_details(data))
+        await __update_channels_videos_data(ch_video_data, collection)
 
 
 @db_yt_channel_video_route.post(
