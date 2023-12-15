@@ -21,7 +21,7 @@ async def get_collection() -> AsyncIOMotorCollection:
 
 @db_yt_channel_video_route.post("/")
 @APIExceptionResponder
-async def get_channels(
+async def get_channels_videos_data(
     channel_ids: list[str],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> list[YtChannelVideoData]:
@@ -34,9 +34,9 @@ async def get_channels(
     )
 
 
-@db_yt_channel_video_route.put("/bulk", status_code=204)
+@db_yt_channel_video_route.put("/", status_code=204)
 @APIExceptionResponder
-async def update_channel_video_data_in_bulk(
+async def update_channels_videos_data(
     data: list[YtChannelVideoData],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
@@ -47,7 +47,7 @@ async def update_channel_video_data_in_bulk(
         channel["channelId"]: channel for channel in existing_channels
     }
 
-    bulk_operations = []
+    operations = []
     for ch_data in data:
         existing_channel = existing_channels_dict.get(ch_data.channelId)
         if existing_channel:
@@ -55,26 +55,26 @@ async def update_channel_video_data_in_bulk(
             new_video_ids = set(ch_data.videoIds)
             if new_video_ids - existing_video_ids:
                 total_ids = list(existing_video_ids | new_video_ids)
-                bulk_operations.append(
+                operations.append(
                     UpdateOne(
                         {"channelId": ch_data.channelId},
                         {"$set": {"videoIds": total_ids}},
                     )
                 )
         else:
-            bulk_operations.append(InsertOne(ch_data.model_dump()))
+            operations.append(InsertOne(ch_data.model_dump()))
 
-    if bulk_operations:
-        await collection.bulk_write(bulk_operations)
+    if operations:
+        await collection.bulk_write(operations)
 
 
 @db_yt_channel_video_route.put(
-    "/bulk/videosDetails",
+    "/usingVideosDetails",
     status_code=204,
     description="Insert or Update channel videos data in database using video details.",
 )
 @APIExceptionResponder
-async def update_using_video_details(
+async def update_using_videos_details(
     details: list[YtVideoDetails],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
@@ -110,10 +110,10 @@ async def update_using_video_details(
 
 @db_yt_channel_video_route.post(
     "/excludeExistingIds",
-    description="Exclude the videosId which are present in database.",
+    description="Exclude the videosId which are exists in database.",
 )
 @APIExceptionResponder
-async def exclude_present_ids(
+async def exclude_ids_exists_in_database(
     data: list[YtChannelVideoData],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> list[str]:

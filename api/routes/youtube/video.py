@@ -47,7 +47,7 @@ async def fetch_video_details_from_yt_api(
     tags=["youtubeApi"],
 )
 @APIExceptionResponder
-async def get_many_videos(
+async def get_videos_details_from_yt_api(
     ids: list[str],
     n: int = Query(
         200,
