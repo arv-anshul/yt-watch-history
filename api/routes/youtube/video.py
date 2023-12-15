@@ -45,13 +45,14 @@ async def fetch_video_details_from_yt_api(
 @yt_video_route.post(
     "/",
     tags=["youtubeApi"],
+    description="Get Multiple Videos Deatails using YouTube API.",
 )
 @APIExceptionResponder
 async def get_videos_details_from_yt_api(
     ids: list[str],
     n: int = Query(
         200,
-        description="Maximum no. of videos details being fetches.",
+        description="Maximum No. of Videos Details being Fetch.",
         gt=1,
     ),
     key: str = YT_API_KEY_AS_API_HEADER,

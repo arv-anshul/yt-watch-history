@@ -19,7 +19,10 @@ async def get_collection() -> AsyncIOMotorCollection:
     return collection
 
 
-@db_yt_channel_video_route.post("/")
+@db_yt_channel_video_route.post(
+    "/",
+    description="Get multiple channels videos data from database.",
+)
 @APIExceptionResponder
 async def get_channels_videos_data(
     channel_ids: list[str],
@@ -34,7 +37,11 @@ async def get_channels_videos_data(
     )
 
 
-@db_yt_channel_video_route.put("/", status_code=204)
+@db_yt_channel_video_route.put(
+    "/",
+    status_code=204,
+    description="Update or Insert Channel Data into Database.",
+)
 @APIExceptionResponder
 async def update_channels_videos_data(
     data: list[YtChannelVideoData],
@@ -71,7 +78,7 @@ async def update_channels_videos_data(
 @db_yt_channel_video_route.put(
     "/usingVideosDetails",
     status_code=204,
-    description="Insert or Update channel videos data in database using video details.",
+    description="Insert or Update Multiple Channels Videos Data in Database Using Video Details.",
 )
 @APIExceptionResponder
 async def update_using_videos_details(
@@ -110,7 +117,7 @@ async def update_using_videos_details(
 
 @db_yt_channel_video_route.post(
     "/excludeExistingIds",
-    description="Exclude the videosId which are exists in database.",
+    description="Exclude VideosId Which are Exists in Database.",
 )
 @APIExceptionResponder
 async def exclude_ids_exists_in_database(

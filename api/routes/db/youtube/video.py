@@ -15,7 +15,10 @@ async def get_collection() -> AsyncIOMotorCollection:
     return collection
 
 
-@db_yt_video_route.post("/")
+@db_yt_video_route.post(
+    "/",
+    description="Get Videos Details from Database with VideosId.",
+)
 @APIExceptionResponder
 async def get_yt_videos_details(
     ids: list[str],
@@ -30,7 +33,7 @@ async def get_yt_videos_details(
 @db_yt_video_route.put(
     "/",
     status_code=204,
-    description="Insert or Update the video details.",
+    description="Insert or Update Multiple Video Details.",
 )
 @APIExceptionResponder
 async def update_videos_details(
