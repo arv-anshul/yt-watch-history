@@ -43,7 +43,7 @@ videoIds which are already available in our database.
 
 # User history dataframe
 df = st_utils.get_ingested_yt_history_df()
-total_ids = st_utils.get_frequent_ids(df, 100)
+total_ids = st_utils.get_frequent_ids(df, 130)
 total_ids_count = len(total_ids)
 
 
@@ -127,7 +127,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
             st.stop()
 
     status = st.status("Fetching Data using API key...", expanded=True)
-    client = httpx.Client(timeout=22)
+    client = httpx.Client(timeout=10)
 
     # excludeVideoIds which are present in database
     filtered_ids = __request(
@@ -149,16 +149,16 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     # Fetch videos details using ids (which are not present in database)
     status.write(f"Fetching {len(filtered_ids)} video details from API.")
     videos_details = []
-    __nums = np.linspace(0, 1, (len(filtered_ids) // 200) + 1)
+    __nums = np.linspace(0, 1, (len(filtered_ids) // 300) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(filtered_ids, 200)):
+    for i, batch in enumerate(batch_iter(filtered_ids, 300)):
         __pbar.progress(
             __nums[i], ":blue[Fecting videos details using YouTube API in batches.]"
         )
         __details = __request(
             client,
             method="POST",
-            url=f"{API_HOST_URL}/yt/video/?n=200",
+            url=f"{API_HOST_URL}/yt/video/?n=300",
             json=batch,
             headers={"YT-API-KEY": api_key},
         )
@@ -175,15 +175,13 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     # Store videos data into database
     status.write(":orange[Preparing to store fetched data into database.]")
     status.write(":green[Connecting to database...]")
-    __nums = np.linspace(0, 1, (len(videos_details) // 100) + 1)
+    __nums = np.linspace(0, 1, (len(videos_details) // 150) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(videos_details, 100)):
+    for i, batch in enumerate(batch_iter(videos_details, 150)):
         __pbar.progress(
-            __nums[i], ":blue[Storing details in a batch of 100 into database.]"
+            __nums[i], ":blue[Storing details in a batch of 150 into database.]"
         )
-        __request(
-            client, method="PUT", url=f"{API_HOST_URL}/db/yt/video/bulk", json=batch
-        )
+        __request(client, method="PUT", url=f"{API_HOST_URL}/db/yt/video/", json=batch)
     __pbar.empty()
     status.write(":blue[All Details stored in database.]")
 
@@ -191,7 +189,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     __request(
         client,
         method="PUT",
-        url=f"{API_HOST_URL}/db/yt/channel/video/bulk/videosDetails",
+        url=f"{API_HOST_URL}/db/yt/channel/video/usingVideosDetails",
         json=videos_details,
     )
     status.write("Channel videos data stored in database.")

@@ -12,7 +12,7 @@ from api.models.youtube import YtVideoDetails
 yt_video_route = APIRouter(prefix="/video", tags=["video"])
 
 
-async def fetch_one_video(
+async def fetch_video_details_from_yt_api(
     key: str,
     ids: str,
     *,
@@ -42,43 +42,26 @@ async def fetch_one_video(
     return await YtVideoDetails.from_dicts(data)
 
 
-@yt_video_route.get(
-    "/",
-    tags=["youtubeApi"],
-)
-@APIExceptionResponder
-async def get_one_video(
-    id: str,
-    key: str = YT_API_KEY_AS_API_HEADER,
-    part: Optional[str] = None,
-) -> YtVideoDetails:
-    data = await fetch_one_video(key, id, part=part)
-    if len(data) == 1:
-        return data[0]
-    elif len(data) == 0:
-        raise HTTPException(204, {"message": "Video details not found.", "id": id})
-    else:
-        raise HTTPException(400, "Something weired happend.")
-
-
 @yt_video_route.post(
     "/",
     tags=["youtubeApi"],
+    description="Get Multiple Videos Deatails using YouTube API.",
 )
 @APIExceptionResponder
-async def get_many_videos(
+async def get_videos_details_from_yt_api(
     ids: list[str],
-    n: int = Query(
+    limit: int = Query(
         200,
-        description="Maximum no. of videos details being fetches.",
+        description="Maximum No. of Videos Details being Fetch.",
         gt=1,
+        le=400,
     ),
     key: str = YT_API_KEY_AS_API_HEADER,
     part: Optional[str] = None,
 ) -> list[YtVideoDetails]:
     tasks = []
-    for _50_ids in batch_iter(ids[:n], 50):
-        vids = fetch_one_video(key, ",".join(_50_ids), part=part)
+    for _50_ids in batch_iter(ids[:limit], 50):
+        vids = fetch_video_details_from_yt_api(key, ",".join(_50_ids), part=part)
         tasks.append(vids)
     details = await asyncio.gather(*tasks)
     return [j for i in details for j in i]
