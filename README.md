@@ -74,12 +74,7 @@ http://localhost:8501
 
 #### Now, when you have all the prerequisite.
 
-1. Place your MongoDB URL and YouTube API Key into `.env` file.
-
-```sh
-MONGODB_URL="MONGODB-URL"
-YT_API_KEY="YT-API-KEY"
-```
+1. Rename `example.env` file to `.env` and fill the `MONGODB_URL` and `YT_API_KEY` parameters.
 
 2. Run the api using terminal _(Use anyone command)_:
 
