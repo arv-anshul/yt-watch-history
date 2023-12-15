@@ -1,3 +1,5 @@
+import typing
+
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
@@ -37,6 +39,36 @@ async def get_channels_videos_data(
     )
 
 
+async def __update_channels_videos_data(
+    data: typing.Iterable[YtChannelVideoData],
+    collection: AsyncIOMotorCollection,
+) -> None:
+    existing_channels = await collection.find(
+        {"channelId": {"$in": [ch_data.channelId for ch_data in data]}}
+    ).to_list(None)
+    existing_channels_dict = {
+        channel["channelId"]: channel for channel in existing_channels
+    }
+
+    operations = []
+    for i in data:
+        existing_channel = existing_channels_dict.get(i.channelId)
+        if existing_channel is None:
+            operations.append(InsertOne(i.model_dump()))
+            continue
+        existing_video_ids = set(existing_channel.get("videoIds", []))
+        new_video_ids = set(i.videoIds)
+        if new_video_ids - existing_video_ids:
+            operations.append(
+                UpdateOne(
+                    {"channelId": i.channelId},
+                    {"$set": {"videoIds": list(existing_video_ids | new_video_ids)}},
+                )
+            )
+    if operations:
+        await collection.bulk_write(operations)
+
+
 @db_yt_channel_video_route.put(
     "/",
     status_code=204,
@@ -47,32 +79,8 @@ async def update_channels_videos_data(
     data: list[YtChannelVideoData],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
-    existing_channels = await collection.find(
-        {"channelId": {"$in": [ch_data.channelId for ch_data in data]}}
-    ).to_list(None)
-    existing_channels_dict = {
-        channel["channelId"]: channel for channel in existing_channels
-    }
-
-    operations = []
-    for ch_data in data:
-        existing_channel = existing_channels_dict.get(ch_data.channelId)
-        if existing_channel:
-            existing_video_ids = set(existing_channel.get("videoIds", []))
-            new_video_ids = set(ch_data.videoIds)
-            if new_video_ids - existing_video_ids:
-                total_ids = list(existing_video_ids | new_video_ids)
-                operations.append(
-                    UpdateOne(
-                        {"channelId": ch_data.channelId},
-                        {"$set": {"videoIds": total_ids}},
-                    )
-                )
-        else:
-            operations.append(InsertOne(ch_data.model_dump()))
-
-    if operations:
-        await collection.bulk_write(operations)
+    if data:
+        await __update_channels_videos_data(data, collection)
 
 
 @db_yt_channel_video_route.put(
@@ -82,37 +90,13 @@ async def update_channels_videos_data(
 )
 @APIExceptionResponder
 async def update_using_videos_details(
-    details: list[YtVideoDetails],
+    data: list[YtVideoDetails],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
-    if not details:
-        return
-    channel_video_data = YtChannelVideoData.from_video_details(details)
-
-    existing_channels = await collection.find(
-        {"channelId": {"$in": [i.channelId for i in channel_video_data]}}
-    ).to_list(None)
-    existing_channels_dict = {
-        channel["channelId"]: channel for channel in existing_channels
-    }
-
-    operations = []
-    for i in channel_video_data:
-        filter_query = {"channelId": i.channelId}
-        existing_channel = existing_channels_dict.get(i.channelId)
-        if existing_channel:
-            existing_video_ids = set(existing_channel.get("videoIds", []))
-            new_video_ids = set(i.videoIds)
-            if new_video_ids - existing_video_ids:
-                total_ids = list(existing_video_ids | new_video_ids)
-                operations.append(
-                    UpdateOne(filter_query, {"$set": {"videoIds": total_ids}})
-                )
-        else:
-            operations.append(InsertOne(i.model_dump()))
-
-    if operations:
-        await collection.bulk_write(operations)
+    if data:
+        await __update_channels_videos_data(
+            YtChannelVideoData.from_video_details(data), collection
+        )
 
 
 @db_yt_channel_video_route.post(
@@ -131,7 +115,7 @@ async def exclude_ids_exists_in_database(
     ]
     ch_data = await collection.aggregate(pipeline).to_list(None)
     ids_from_db = {j for i in ch_data[0]["videoIds"] for j in i} if ch_data else set()
-    id_not_present = list(ids_from_data - ids_from_db)
-    if id_not_present:
-        return id_not_present
+    id_not_exists = list(ids_from_data - ids_from_db)
+    if id_not_exists:
+        return id_not_exists
     raise HTTPException(204)

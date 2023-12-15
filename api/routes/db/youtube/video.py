@@ -24,7 +24,7 @@ async def get_yt_videos_details(
     ids: list[str],
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> list[YtVideoDetails]:
-    details = await collection.find({"id": {"$in": ids}}).to_list(length=None)
+    details = await collection.find({"id": {"$in": ids}}).to_list(None)
     if details:
         return [YtVideoDetails(**i) for i in details]
     raise HTTPException(404, {"message": "Details not found in database.", "id": ids})
@@ -40,7 +40,7 @@ async def update_videos_details(
     details: list[YtVideoDetails],
     force_update: bool = False,
     collection: AsyncIOMotorCollection = Depends(get_collection),
-):
+) -> None:
     existing_videos = await collection.find(
         {"id": {"$in": [i.id for i in details]}}
     ).to_list(None)
@@ -49,14 +49,9 @@ async def update_videos_details(
     operations = []
     for video in details:
         existing_video = existing_video_ids.get(video.id)
-        if existing_video:
-            if force_update is False:
-                continue
-            operations.append(
-                UpdateOne({"_id": existing_video["_id"]}, {"$set": video.model_dump()})
-            )
-        else:
+        if existing_video is None:
             operations.append(InsertOne(video.model_dump()))
-
+        elif force_update is True:
+            operations.append(UpdateOne({"id": video.id}, {"$set": video.model_dump()}))
     if operations:
         await collection.bulk_write(operations)
