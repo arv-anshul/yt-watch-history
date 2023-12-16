@@ -67,9 +67,9 @@ def __request(
     *,
     method: typing.LiteralString,
     url: str,
-    headers: typing.Optional[dict] = None,
+    headers: dict | None = None,
     json: typing.Any = None,
-) -> typing.Optional[typing.Any]:
+) -> typing.Any | None:
     try:
         r = client.request(method, url, headers=headers, json=json)
     except httpx.ConnectError:
