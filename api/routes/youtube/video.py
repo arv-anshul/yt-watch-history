@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
@@ -16,7 +15,7 @@ async def fetch_video_details_from_yt_api(
     key: str,
     ids: str,
     *,
-    part: Optional[str] = None,
+    part: str | None = None,
 ) -> list[YtVideoDetails]:
     part = "snippet,contentDetails" if part is None else part
     url = f"https://www.googleapis.com/youtube/v3/videos?part={part}&id={ids}&key={key}"
@@ -57,7 +56,7 @@ async def get_videos_details_from_yt_api(
         le=400,
     ),
     key: str = YT_API_KEY_AS_API_HEADER,
-    part: Optional[str] = None,
+    part: str | None = None,
 ) -> list[YtVideoDetails]:
     tasks = []
     for _50_ids in batch_iter(ids[:limit], 50):

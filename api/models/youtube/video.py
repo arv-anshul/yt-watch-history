@@ -1,23 +1,23 @@
 import asyncio
 from datetime import datetime
-from typing import Optional, Self
+from typing import Self
 
 from pydantic import BaseModel
 
 
 class YtVideoDetails(BaseModel):
-    categoryId: Optional[str]
-    channelId: Optional[str]
-    channelTitle: Optional[str]
-    description: Optional[str]
-    duration: Optional[str]
+    categoryId: str | None
+    channelId: str | None
+    channelTitle: str | None
+    description: str | None
+    duration: str | None
     id: str
-    publishedAt: Optional[datetime]
-    tags: Optional[list[str]]
-    title: Optional[str]
+    publishedAt: datetime | None
+    tags: list[str] | None
+    title: str | None
 
     @classmethod
-    def null(cls, id: Optional[str] = None) -> Self:
+    def null(cls, id: str | None = None) -> Self:
         return cls(
             categoryId=None,
             channelId=None,
