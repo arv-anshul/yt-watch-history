@@ -50,7 +50,7 @@ total_ids_count = len(total_ids)
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 def set_status_as_error(__r: httpx.Response, /) -> typing.NoReturn:
     try:
-        message = __r.json()["detail"]["message"]
+        message = __r.json()["error"]
     except json.JSONDecodeError:
         message = __r.text
     except (KeyError, TypeError):
