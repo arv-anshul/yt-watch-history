@@ -35,8 +35,9 @@ def get_frequent_ids(
 
     df = df.filter(
         pl.col("time") > delta,
-        pl.col("isShorts", "fromYtSearchHistActivity", "fromWebAppActivity")
-        == False,  # noqa: E712
+        pl.all_horizontal(
+            "isShorts", "fromYtSearchHistActivity", "fromWebAppActivity"
+        ).eq(False),
     )
     freq_channels = (
         df.drop_nulls("channelTitle")

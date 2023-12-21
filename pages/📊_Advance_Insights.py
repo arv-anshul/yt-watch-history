@@ -273,7 +273,7 @@ if sl_analysis == _options[2]:
         .map_elements(lambda x: "Shorts Video" if x else "Long Videos")
         .value_counts(),
         names="isShorts",
-        values="counts",
+        values="count",
         title="Ratio between Shorts and Long Form Video",
     )
     l.plotly_chart(fig, True)

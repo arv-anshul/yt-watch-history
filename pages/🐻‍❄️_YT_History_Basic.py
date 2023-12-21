@@ -88,7 +88,7 @@ if sl_analysis == _options[0]:
     # No. Of Channels You Watches Frequently
     threshold = 7
     freq_ch_num = (
-        df["channelTitle"].value_counts().filter(pl.col("counts") > threshold).height
+        df["channelTitle"].value_counts().filter(pl.col("count") > threshold).height
     )
     fig = px.pie(
         values=[freq_ch_num, df.height - freq_ch_num],
@@ -112,7 +112,7 @@ if sl_analysis == _options[0]:
     fig = px.bar(
         df["channelTitle"].value_counts(sort=True).head(7),
         "channelTitle",
-        "counts",
+        "count",
         title="Top 7 Channel You Have Watched",
     )
     st.plotly_chart(fig, True)
@@ -259,7 +259,7 @@ if sl_analysis == _options[3]:
     fig = px.pie(
         df["contentType"].value_counts(sort=True),
         "contentType",
-        "counts",
+        "count",
         title="Different ContentType Consumption",
     )
     l.plotly_chart(fig, True)
