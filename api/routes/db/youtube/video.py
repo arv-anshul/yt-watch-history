@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
-from api._errors import APIExceptionResponder
 from api.configs import DB_NAME, YT_VIDEO_COLLECTION
 from api.models.youtube import YtVideoDetails
 from api.routes.db.connect import get_db_client
@@ -19,7 +18,6 @@ async def get_collection() -> AsyncIOMotorCollection:
     "/",
     description="Get Videos Details from Database with VideosId.",
 )
-@APIExceptionResponder
 async def get_yt_videos_details(
     ids: list[str],
     collection: AsyncIOMotorCollection = Depends(get_collection),
@@ -35,7 +33,6 @@ async def get_yt_videos_details(
     status_code=204,
     description="Insert or Update Multiple Video Details.",
 )
-@APIExceptionResponder
 async def update_videos_details(
     details: list[YtVideoDetails],
     force_update: bool = False,

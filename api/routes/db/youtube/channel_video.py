@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
-from api._errors import APIExceptionResponder
 from api.configs import DB_NAME, YT_CHANNEL_VIDEO_COLLECTION
 from api.models.youtube import YtChannelVideoData
 from api.models.youtube.video import YtVideoDetails
@@ -25,7 +24,6 @@ async def get_collection() -> AsyncIOMotorCollection:
     "/",
     description="Get multiple channels videos data from database.",
 )
-@APIExceptionResponder
 async def get_channels_videos_data(
     channel_ids: list[str],
     collection: AsyncIOMotorCollection = Depends(get_collection),
@@ -74,7 +72,6 @@ async def __update_channels_videos_data(
     status_code=204,
     description="Update or Insert Channel Data into Database.",
 )
-@APIExceptionResponder
 async def update_channels_videos_data(
     data: list[YtChannelVideoData],
     collection: AsyncIOMotorCollection = Depends(get_collection),
@@ -88,7 +85,6 @@ async def update_channels_videos_data(
     status_code=204,
     description="Insert or Update Multiple Channels Videos Data in Database Using Video Details.",
 )
-@APIExceptionResponder
 async def update_using_videos_details(
     data: list[YtVideoDetails],
     collection: AsyncIOMotorCollection = Depends(get_collection),
@@ -102,7 +98,6 @@ async def update_using_videos_details(
     "/excludeExistingIds",
     description="Exclude VideosId Which are Exists in Database.",
 )
-@APIExceptionResponder
 async def exclude_ids_exists_in_database(
     data: list[YtChannelVideoData],
     collection: AsyncIOMotorCollection = Depends(get_collection),

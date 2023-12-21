@@ -3,7 +3,6 @@ import asyncio
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
-from api._errors import APIExceptionResponder
 from api._utils import batch_iter
 from api.configs import YT_API_KEY_AS_API_HEADER
 from api.models.youtube import YtVideoDetails
@@ -46,7 +45,6 @@ async def fetch_video_details_from_yt_api(
     tags=["youtubeApi"],
     description="Get Multiple Videos Deatails using YouTube API.",
 )
-@APIExceptionResponder
 async def get_videos_details_from_yt_api(
     ids: list[str],
     limit: int = Query(
