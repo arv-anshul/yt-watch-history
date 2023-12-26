@@ -1,19 +1,20 @@
 PYTHON := python3
 
-STREAMLIT := README.py
-API := api/app.py
-
-.PHONY: st api
+STREAMLIT_APP := README.py
+API_APP := app.py
 
 note:
 	code "/Users/iarv/Documents/OBSIDIAN/Learning Diary/Projects Note/YT History Analyser.md"
 
-st: $(STREAMLIT)
-	@streamlit run $<
+# ---------------------------------- Project Apps ------------------------------------------
 
-api: $(API)
-	@python3 -m api.app
-	# @uvicorn --reload api.app:app
+.PHONY: st api
+
+st: $(STREAMLIT_APP)
+	streamlit run $<
+
+api: $(API_APP)
+	$(PYTHON) $<
 
 # ---------------------------------- Git Hooks ------------------------------------------
 

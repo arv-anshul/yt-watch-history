@@ -7,9 +7,9 @@ from pathlib import Path
 
 @functools.cache
 def __get_log_level() -> int:
-    level = os.getenv("API_LOG_LEVEL")
+    level = os.getenv("LOG_LEVEL")
     if level is None:
-        raise ValueError("Provide 'API_LOG_LEVEL' variable in '.env' file.")
+        raise ValueError("Provide 'LOG_LEVEL' variable in '.env' file.")
     if level in logging._nameToLevel:
         return getattr(logging, level)
     raise ValueError(f"{level!r} is not valid log level.")

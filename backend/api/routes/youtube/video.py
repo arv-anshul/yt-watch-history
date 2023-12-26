@@ -3,9 +3,9 @@ import asyncio
 import httpx
 from fastapi import APIRouter, HTTPException, Query
 
-from api._utils import batch_iter
-from api.configs import YT_API_KEY_AS_API_HEADER
-from api.models.youtube import YtVideoDetails
+from backend.api._utils import batch_iter
+from backend.api.configs import YT_API_KEY_AS_API_HEADER
+from backend.api.models.youtube import YtVideoDetails
 
 yt_video_route = APIRouter(prefix="/video", tags=["video"])
 

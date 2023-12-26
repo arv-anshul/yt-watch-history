@@ -19,9 +19,9 @@ import polars as pl
 import streamlit as st
 from plotly import express as px
 
-from api._utils import batch_iter
-from api.configs import API_HOST_URL
-from api.models.youtube import YtChannelVideoData
+from backend.api._utils import batch_iter
+from backend.api.configs import API_HOST_URL
+from backend.api.models.youtube import YtChannelVideoData
 from frontend import st_utils
 from frontend.configs import YT_API_KEY
 from frontend.constants import VIDEO_DETAILS_JSON_PATH
