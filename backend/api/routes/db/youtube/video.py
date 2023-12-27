@@ -16,6 +16,19 @@ async def get_collection() -> AsyncIOMotorCollection:
 
 @db_yt_video_route.post(
     "/",
+    description="Get all video details data from database.",
+)
+async def get_all_video_details(
+    collection: AsyncIOMotorCollection = Depends(get_collection),
+) -> list[YtVideoDetails]:
+    data = await collection.find().to_list(None)
+    if not data:
+        raise HTTPException(404, {"error": "No data from database."})
+    return data
+
+
+@db_yt_video_route.post(
+    "/",
     description="Get Videos Details from Database with VideosId.",
 )
 async def get_yt_videos_details(

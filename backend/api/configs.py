@@ -11,6 +11,9 @@ DB_NAME = "YoutubeDB"
 YT_VIDEO_COLLECTION = "YtVideosData"
 YT_CHANNEL_VIDEO_COLLECTION = "YtChannelVidData"
 
+DB_CTT = "CttDB"
+COLLECTION_CTT_CHANNELS = "CttChannelsData"
+
 # YouTube API configs
 YT_API_KEY_AS_API_HEADER = Header(
     alias="YT-API-KEY",
