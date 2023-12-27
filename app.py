@@ -3,21 +3,20 @@ import logging
 from contextlib import asynccontextmanager
 
 import dotenv
-import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from api import configs, routes
-from api._logger import load_logging
+from backend.api import configs, routes
+from backend.api._logger import load_logging
 
 
 @asynccontextmanager
 async def main_api_lifespan(app: FastAPI):
     dotenv.load_dotenv()
     load_logging()
-    logging.debug("Starting `api.app:app` FastAPI instance.")
+    logging.debug("Starting FastAPI app instance.")
     yield
-    logging.debug("Shuting Down `api.app:app` FastAPI instance.")
+    logging.debug("Shuting down FastAPI app instance.")
 
 
 app = FastAPI(lifespan=main_api_lifespan)
@@ -62,8 +61,10 @@ app.include_router(routes.db.db_route)
 app.include_router(routes.youtube.yt_route)
 
 if __name__ == "__main__":
+    import uvicorn
+
     uvicorn.run(
-        "api.app:app",
+        app,
         host=configs.API_HOST,
         port=configs.API_PORT,
         reload=configs.API_RELOAD,

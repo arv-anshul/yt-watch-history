@@ -80,10 +80,10 @@ http://localhost:8501
 
 ```sh
 # Using python command
-python -m api.app
+python app.py
 
 # Using uvicorn command
-uvicorn api.app:app
+uvicorn app:app
 
 # Using make command (Easy)
 make api
