@@ -18,7 +18,7 @@ api: $(API_APP)
 
 # ---------------------------------- Git Hooks ------------------------------------------
 
-PRE_COMMIT_YAML := .configs/.pre-commit-config.yaml
+PRE_COMMIT_YAML := configs/.pre-commit-config.yaml
 
 install-hooks: $(PRE_COMMIT_YAML)  ## Install `pre-commit-hooks` on local directory [see: https://pre-commit.com]
 	$(PYTHON) -m pip install pre-commit
