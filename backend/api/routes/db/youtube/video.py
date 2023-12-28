@@ -15,7 +15,7 @@ async def get_collection() -> AsyncIOMotorCollection:
 
 
 @db_yt_video_route.post(
-    "/",
+    "/all",
     description="Get all video details data from database.",
 )
 async def get_all_video_details(
