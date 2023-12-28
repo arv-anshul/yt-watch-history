@@ -1,7 +1,7 @@
 import functools
 
 import polars as pl
-from fastapi import APIRouter, Depends, Header, UploadFile
+from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 from sklearn.pipeline import Pipeline
 
@@ -28,8 +28,10 @@ def load_model(
         print("Loading Models from mlflow...")
         model = CttTitleModel.load_model_mlflow(run_id)
     else:
-        print("Loading Models using dill...")
-        model = CttTitleModel.load_model_dill()
+        try:
+            model = CttTitleModel.load_model_dill()
+        except FileNotFoundError as e:
+            raise HTTPException(404, {"error": str(e)})
     return model
 
 
