@@ -14,7 +14,6 @@ router = APIRouter(prefix="/ctt", tags=["ctt"])
 class PredictionIn(BaseModel):
     title: str
     videoId: str
-    channelId: str
 
 
 class PredictionOut(PredictionIn):
