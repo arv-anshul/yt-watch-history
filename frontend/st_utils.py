@@ -57,9 +57,6 @@ def delete_user_data_button():
     if st.sidebar.button("🗂️ Delete User Data", use_container_width=True):
         all_user_data_paths = (
             C.INGESTED_YT_HISTORY_DATA_PATH,
-            C.CONTENT_TYPE_VEC_PATH,
-            C.CONTENT_TYPE_LABEL_ENC_PATH,
-            C.CONTENT_TYPE_MODEL_PATH,
             C.VIDEO_DETAILS_JSON_PATH,
         )
         [i.unlink() for i in all_user_data_paths if i.exists()]
