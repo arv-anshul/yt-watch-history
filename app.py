@@ -59,6 +59,7 @@ async def root():
 
 app.include_router(routes.db.db_route)
 app.include_router(routes.youtube.yt_route)
+app.include_router(routes.ml.router)
 
 if __name__ == "__main__":
     import uvicorn
