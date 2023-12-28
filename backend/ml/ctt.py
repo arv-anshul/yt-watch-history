@@ -187,7 +187,10 @@ class CttTitleModel:
 
     @classmethod
     def load_model_dill(cls) -> Pipeline:
-        (model,) = io.load_objects(MODEL_PATH + ".dill")
+        path = MODEL_PATH + ".dill"
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Ctt Model not found at {path!r}")
+        (model,) = io.load_objects(path)
         return model
 
     @classmethod
