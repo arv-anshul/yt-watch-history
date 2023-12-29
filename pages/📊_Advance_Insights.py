@@ -23,17 +23,16 @@ from backend.api._utils import batch_iter
 from backend.api.configs import API_HOST_URL
 from backend.api.models.youtube import YtChannelVideoData
 from frontend import st_utils
-from frontend.configs import YT_API_KEY
-from frontend.constants import VIDEO_DETAILS_JSON_PATH
+from frontend.configs import VIDEO_DETAILS_JSON_PATH, YT_API_KEY
 from frontend.youtube import VideoDetails
 
 st.set_page_config("Advance Insights", "😃", "wide", "expanded")
 DETAILS_ABOUT_PAGE = """
 This app uses **YouTube Data v3 API** to fetch the details of the videos from your
 history data. Also it only fetches data of those **videos which you have watched in last
-100 days** and only of **those channels which you watched frequently**.
+(n) days** and only of **those channels which you watched frequently**.
 
-In your case, we will be fetching details of **:green[{len_of_ids} videos]** and using only these
+We only fetches video details of recently watched videos and using only these
 videos details we will give you some insights about your watch time on YouTube.
 There are **no YouTube shorts video** data being fetched by the API.
 
@@ -43,8 +42,6 @@ videoIds which are already available in our database.
 
 # User history dataframe
 df = st_utils.get_ingested_yt_history_df()
-total_ids = st_utils.get_frequent_ids(df, 130)
-total_ids_count = len(total_ids)
 
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
@@ -91,12 +88,12 @@ def __finally_get_video_details(client: httpx.Client, ids: list[str]) -> None:
     video_details = __request(
         client, method="POST", url=f"{API_HOST_URL}/db/yt/video/", json=ids
     )
-    if video_details is None:
+    if not video_details:
         status.write("❌ **:red[No video details found in database (in the end).]**")
         status.update(label="No video details found.", expanded=True, state="error")
         st.stop()
     with open(VIDEO_DETAILS_JSON_PATH, "w") as f:
-        json.dump(video_details, f, indent=2)
+        json.dump(video_details, f)
 
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
@@ -106,7 +103,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     with st.expander("🤔 Details About Page"):
         st.write(__doc__)
         st.divider()
-        st.markdown(DETAILS_ABOUT_PAGE.format(len_of_ids=total_ids_count))
+        st.markdown(DETAILS_ABOUT_PAGE)
 
     with st.form("store-api-key"):
         api_key = st.text_input(
@@ -115,17 +112,14 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
             type="password",
             placeholder="YouTube Data API Key",
         )
-        fetch_n_videos = st.number_input(
-            "No. of videos details fetch using YouTube API",
-            min_value=int(total_ids_count * 0.7) + 1,
-            max_value=total_ids_count,
-            value=total_ids_count,
-            format="%d",
-            help="You must have to fetch 70% of videos details of the total videos.",
+        last_n_days = st.number_input(
+            "Fetch Data of Last (n) Days", 300, 500, "min", 20, "%d"
         )
         if not st.form_submit_button(use_container_width=True):
             st.stop()
 
+    total_ids = st_utils.get_frequent_ids(df, last_n_days=int(last_n_days))
+    total_ids_count = len(total_ids)  # Store count of total ids
     status = st.status("Fetching Data using API key...", expanded=True)
     client = httpx.Client(timeout=10)
 
@@ -141,6 +135,8 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
             )
         ],
     )
+
+    # When all ids present in database
     if not filtered_ids:
         status.write(":red[No videoIds to fetch.]")
         __finally_get_video_details(client, total_ids)
@@ -149,23 +145,25 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     # Fetch videos details using ids (which are not present in database)
     status.write(f"Fetching {len(filtered_ids)} video details from API.")
     videos_details = []
-    __nums = np.linspace(0, 1, (len(filtered_ids) // 300) + 1)
+    __nums = np.linspace(0, 1, (len(filtered_ids) // 400) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(filtered_ids, 300)):
+    for i, batch in enumerate(batch_iter(filtered_ids, 400)):
         __pbar.progress(
             __nums[i], ":blue[Fecting videos details using YouTube API in batches.]"
         )
-        __details = __request(
+        v = __request(
             client,
             method="POST",
-            url=f"{API_HOST_URL}/yt/video/?n=300",
+            url=f"{API_HOST_URL}/yt/video/?n=400",
             json=batch,
             headers={"YT-API-KEY": api_key},
         )
-        if __details:
-            videos_details.extend(__details)
-    __pbar.empty()
+        if v:
+            videos_details.extend(v)
+    else:
+        __pbar.empty()
 
+    # When no videos details returned by youtube's api
     if not videos_details:
         status.write(":red[No video details returned from YouTube API.]")
         __finally_get_video_details(client, total_ids)
@@ -175,14 +173,15 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     # Store videos data into database
     status.write(":orange[Preparing to store fetched data into database.]")
     status.write(":green[Connecting to database...]")
-    __nums = np.linspace(0, 1, (len(videos_details) // 150) + 1)
+    __nums = np.linspace(0, 1, (len(videos_details) // 200) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(videos_details, 150)):
+    for i, batch in enumerate(batch_iter(videos_details, 200)):
         __pbar.progress(
-            __nums[i], ":blue[Storing details in a batch of 150 into database.]"
+            __nums[i], ":blue[Storing details in a batch of 200 into database.]"
         )
         __request(client, method="PUT", url=f"{API_HOST_URL}/db/yt/video/", json=batch)
-    __pbar.empty()
+    else:
+        __pbar.empty()
     status.write(":blue[All Details stored in database.]")
 
     # Store channel videos data into database
@@ -205,6 +204,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     # Close httpx client
     client.close()
 
+    # Refresh button
     if st.button("Refresh Page", type="primary", use_container_width=True):
         st.rerun()
     st.stop()

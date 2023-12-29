@@ -1,4 +1,3 @@
-from io import IOBase
 from pathlib import Path
 
 import emoji
@@ -6,7 +5,7 @@ import polars as pl
 
 
 class IngestYtHistory:
-    def __init__(self, source: str | Path | IOBase | bytes) -> None:
+    def __init__(self, source: str | Path) -> None:
         self.df = pl.read_json(source)
 
     def _preprocess_data(self, df: pl.DataFrame) -> pl.DataFrame:

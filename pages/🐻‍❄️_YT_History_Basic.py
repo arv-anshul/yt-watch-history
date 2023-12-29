@@ -8,16 +8,16 @@ from matplotlib import pyplot as plt
 from plotly import express as px
 from wordcloud import STOPWORDS, WordCloud
 
-import frontend.constants as C
 from backend.api.configs import API_HOST_URL
 from frontend import st_utils
+from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH
 from frontend.youtube import IngestYtHistory
 
 st.set_page_config("YT Watch History", "🐻‍❄", "wide")
 df = None
 
 # Import or Upload data into app
-if C.INGESTED_YT_HISTORY_DATA_PATH.exists():
+if INGESTED_YT_HISTORY_DATA_PATH.exists():
     df = st_utils.get_ingested_yt_history_df()
 else:
     with st.form("upload-yt-history-data"):
@@ -56,7 +56,7 @@ else:
         pred_df = pl.DataFrame(response.json())
         status.write(":green[🎊 Prediction compleated!]")
         df = df.join(pred_df, on="videoId")
-        df.write_json(C.INGESTED_YT_HISTORY_DATA_PATH, row_oriented=True)
+        df.write_json(INGESTED_YT_HISTORY_DATA_PATH, row_oriented=True)
         status.update(
             label="📦 Stored ingested data as JSON.", expanded=False, state="complete"
         )
