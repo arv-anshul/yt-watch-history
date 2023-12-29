@@ -198,7 +198,7 @@ if sl_analysis == _options[1]:
 @st.cache_resource
 def generate_cloud():
     title = df.filter(
-        pl.col("isShorts") == False,  # noqa: E712
+        pl.col("isShorts").eq(False),
     )
     text: str = (
         title["title"]
