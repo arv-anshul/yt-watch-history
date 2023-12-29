@@ -1,6 +1,6 @@
 import typing
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
@@ -74,10 +74,11 @@ async def __update_channels_videos_data(
 )
 async def update_channels_videos_data(
     data: list[YtChannelVideoData],
+    bg_tasks: BackgroundTasks,
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
     if data:
-        await __update_channels_videos_data(data, collection)
+        bg_tasks.add_task(__update_channels_videos_data, data, collection)
 
 
 @db_yt_channel_video_route.put(
@@ -87,11 +88,12 @@ async def update_channels_videos_data(
 )
 async def update_using_videos_details(
     data: list[YtVideoDetails],
+    bg_tasks: BackgroundTasks,
     collection: AsyncIOMotorCollection = Depends(get_collection),
 ) -> None:
     if data:
         ch_video_data = list(YtChannelVideoData.from_video_details(data))
-        await __update_channels_videos_data(ch_video_data, collection)
+        bg_tasks.add_task(__update_channels_videos_data, ch_video_data, collection)
 
 
 @db_yt_channel_video_route.post(

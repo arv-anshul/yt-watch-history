@@ -2,14 +2,18 @@ import re
 
 import polars as pl
 
-from frontend import constants as C
+from frontend.configs import (
+    CATEGORY_ID_MAP_PATH,
+    INGESTED_YT_HISTORY_DATA_PATH,
+    VIDEO_DETAILS_JSON_PATH,
+)
 
 
 class VideoDetails:
     def __init__(self) -> None:
-        __df = pl.read_json(C.INGESTED_YT_HISTORY_DATA_PATH)
-        __vdf = pl.read_json(C.VIDEO_DETAILS_JSON_PATH)
-        __cat_id_df = pl.read_json(C.CATEGORY_ID_MAP_PATH).transpose(
+        __df = pl.read_json(INGESTED_YT_HISTORY_DATA_PATH)
+        __vdf = pl.read_json(VIDEO_DETAILS_JSON_PATH)
+        __cat_id_df = pl.read_json(CATEGORY_ID_MAP_PATH).transpose(
             include_header=True,
             header_name="categoryId",
             column_names=["categoryName"],

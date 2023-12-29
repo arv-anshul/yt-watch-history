@@ -72,7 +72,7 @@ class CttTitleModel:
             and self.ctt_channels_data == CHANNELS_DATA_PATH
         ):
             try:
-                data = httpx.post(f"{API_HOST_URL}/db/ctt/")
+                response = httpx.post(f"{API_HOST_URL}/db/ctt/")
             except httpx.HTTPError:
                 raise RuntimeError(
                     f"Data not present on path {CHANNELS_DATA_PATH!r} and "
@@ -80,14 +80,14 @@ class CttTitleModel:
                     "API instance is not running."
                 )
             with open(CHANNELS_DATA_PATH, "w") as f:
-                json.dump(data, f)
+                json.dump(response.json(), f)
         if (
             not os.path.exists(TITLES_DATA_PATH)
             and self.titles_data == TITLES_DATA_PATH
         ):
-            data = httpx.post(f"{API_HOST_URL}/db/yt/video/all")
+            response = httpx.post(f"{API_HOST_URL}/db/yt/video/all")
             with open(TITLES_DATA_PATH, "w") as f:
-                json.dump(data, f)
+                json.dump(response.json(), f)
 
     @cached_property
     def get_df(self) -> pl.DataFrame:

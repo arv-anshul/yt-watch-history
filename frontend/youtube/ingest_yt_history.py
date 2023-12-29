@@ -1,14 +1,11 @@
-from io import IOBase
 from pathlib import Path
 
 import emoji
 import polars as pl
 
-import frontend.constants as C
-
 
 class IngestYtHistory:
-    def __init__(self, source: str | Path | IOBase | bytes) -> None:
+    def __init__(self, source: str | Path) -> None:
         self.df = pl.read_json(source)
 
     def _preprocess_data(self, df: pl.DataFrame) -> pl.DataFrame:
@@ -32,6 +29,9 @@ class IngestYtHistory:
                 "https://www.youtube.com/watch?v=", "https://youtu.be/", literal=True
             ),
             pl.col("titleUrl").str.extract(r"v=(.?*)").alias("videoId"),
+        ).filter(
+            # Filter videos which are removed from youtube
+            pl.col("videoId").is_not_null(),
         )
 
         # details
@@ -120,7 +120,6 @@ class IngestYtHistory:
         df = self._preprocess_data(self.df)
         df = self._feature_extraction(df)
         df = self._drop_cols(df)
-        df.write_json(C.INGESTED_YT_HISTORY_DATA_PATH, pretty=True, row_oriented=True)
         return df
 
     @classmethod
