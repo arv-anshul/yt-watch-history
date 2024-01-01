@@ -85,19 +85,22 @@ if sl_analysis == _options[0]:
     # Dataset time range
     l.metric(
         "Time Range of Dataset",
-        f'{df["time"].max():%b, %y} — {df["time"].min():%b, %y}',
+        f'{df["time"].min():%b, %y} — {df["time"].max():%b, %y}',
     )
     r.metric("No. of Days of Data Present", df["time"].dt.date().n_unique())
 
     # No. Of Channels You Watches Frequently
     threshold = 7
-    freq_ch_num = (
-        df["channelTitle"].value_counts().filter(pl.col("count") > threshold).height
-    )
     fig = px.pie(
-        values=[freq_ch_num, df.height - freq_ch_num],
-        names=["Frequently Watched Channel", "Non Freq. Channel"],
-        title=f"No. of Channels You Watches Frequently [Threshold={threshold}]",
+        values=df["channelTitle"]
+        .value_counts()
+        .select(
+            pl.col("count").ge(7).sum().alias("ge"),
+            pl.col("count").is_between(2, 6).sum().alias("lt"),
+        )
+        .row(0),
+        names=["Frequently Watched Channel (>=7)", "Non Freq. Channel [2,6]"],
+        title=f"% of channels you watches frequently [{threshold=}]",
     )
     l.plotly_chart(fig, True)
 
@@ -108,7 +111,7 @@ if sl_analysis == _options[0]:
     fig = px.pie(
         values=temp.row(0),
         names=temp.columns,
-        title="Count Of Video Watched From Different Activity",
+        title="Count of videos you have watched from different activity",
     )
     r.plotly_chart(fig, True)
 
@@ -117,7 +120,7 @@ if sl_analysis == _options[0]:
         df["channelTitle"].value_counts(sort=True).head(7),
         "channelTitle",
         "count",
-        title="Top 7 Channel You Have Watched",
+        title="Top 7 channels you have watched",
     )
     st.plotly_chart(fig, True)
 
