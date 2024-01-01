@@ -1,3 +1,4 @@
+from io import IOBase
 from pathlib import Path
 
 import emoji
@@ -5,33 +6,40 @@ import polars as pl
 
 
 class IngestYtHistory:
-    def __init__(self, source: str | Path) -> None:
+    def __init__(self, source: str | Path | IOBase) -> None:
         self.df = pl.read_json(source)
 
     def _preprocess_data(self, df: pl.DataFrame) -> pl.DataFrame:
-        # activityControls
-        df = df.with_columns(
-            pl.col("activityControls")
-            .list.contains("YouTube search history")
-            .alias("fromYtSearchHistActivity"),
-            pl.col("activityControls")
-            .list.contains("YouTube watch history")
-            .alias("fromYtWatchHistActivity"),
-            pl.col("activityControls")
-            .list.contains("Web & App Activity")
-            .alias("fromWebAppActivity"),
-        )
-
-        # title and titleUrl
-        df = df.with_columns(
-            pl.col("title").str.replace("Watched |Visited ", ""),
-            pl.col("titleUrl").str.replace(
-                "https://www.youtube.com/watch?v=", "https://youtu.be/", literal=True
-            ),
-            pl.col("titleUrl").str.extract(r"v=(.?*)").alias("videoId"),
-        ).filter(
-            # Filter videos which are removed from youtube
-            pl.col("videoId").is_not_null(),
+        df = (
+            df.lazy()
+            .with_columns(
+                pl.col("activityControls")
+                .list.contains("Web & App Activity")
+                .alias("fromWebAppActivity"),
+                pl.col("activityControls")
+                .list.contains("YouTube search history")
+                .alias("fromYtSearchHistActivity"),
+                pl.col("activityControls")
+                .list.contains("YouTube watch history")
+                .alias("fromYtWatchHistActivity"),
+            )
+            .with_columns(
+                pl.col("title").str.replace(r"Watched |Visited ", ""),
+                pl.col("titleUrl").str.extract(r"v=(.?*)").alias("videoId"),
+            )
+            .filter(
+                # Filter videos which are removed from youtube
+                pl.col("videoId").is_not_null(),
+            )
+            .with_columns(pl.col("subtitles").list.get(0))
+            .with_columns(
+                pl.col("subtitles").struct.field("name").alias("channelTitle"),
+                pl.col("subtitles")
+                .struct.field("url")
+                .str.strip_prefix("https://www.youtube.com/channel/")
+                .alias("channelId"),
+            )
+            .collect()
         )
 
         # details
@@ -46,72 +54,44 @@ class IngestYtHistory:
                 .alias("fromGoogleAds")
             )
 
-        # subtitles
-        # > Extract channelTitle & channelUrl
-        df = df.with_columns(pl.col("subtitles").list.get(0)).with_columns(
-            pl.col("subtitles").struct.field("name").alias("channelTitle"),
-            pl.col("subtitles")
-            .struct.field("url")
-            .str.strip_prefix("https://www.youtube.com/channel/")
-            .alias("channelId"),
-        )
-
         return df
 
     def _feature_extraction(self, df: pl.DataFrame) -> pl.DataFrame:
         # time
-        df = df.with_columns(
-            pl.col("time").str.to_datetime(),
-        ).with_columns(
-            pl.col("time").dt.year().alias("year"),
-            pl.col("time").dt.month()
-            # .map_elements(lambda x: list(calendar.month_name)[int(x)])  # type: ignore
-            .alias("month"),
-            pl.col("time").dt.weekday()
-            # .map_elements(lambda x: list(calendar.day_name)[int(x) - 1])  # type: ignore
-            .alias("weekday"),
-            pl.col("time").dt.hour().alias("hour"),
-        )
-
-        # isShorts
-        df = df.with_columns(
-            pl.col("title").str.contains("(?i)#short").alias("isShorts"),
-        )
-
-        # More feature extraction
-        df = self._other_feature_extraction(df)
-
-        return df
-
-    def _other_feature_extraction(self, df: pl.DataFrame) -> pl.DataFrame:
-        # tags from title
-        df = df.with_columns(
-            pl.col("title").str.extract_all(r"#\w+").alias("titleTags"),
-        )
-
-        # list of emoji from title
-        df = df.with_columns(
-            pl.col("title")
-            .map_elements(lambda x: [e["emoji"] for e in emoji.emoji_list(x)])  # type: ignore
-            .alias("titleEmojis"),
+        df = (
+            df.lazy()
+            .with_columns(
+                pl.col("title").str.contains("(?i)#short").alias("isShorts"),
+                pl.col("time").str.to_datetime(),
+            )
+            .with_columns(
+                pl.col("time").dt.hour().alias("hour"),
+                pl.col("time").dt.month().alias("month"),
+                pl.col("time").dt.weekday().alias("weekday"),
+                pl.col("time").dt.year().alias("year"),
+            )
+            .with_columns(
+                pl.col("title").str.extract_all(r"#\w+").alias("titleTags"),
+                pl.col("title")
+                .map_elements(lambda x: [e["emoji"] for e in emoji.emoji_list(x)])
+                .alias("titleEmojis"),  # List of emoji from title
+            )
+            .collect()
         )
 
         return df
 
     def _drop_cols(self, df: pl.DataFrame) -> pl.DataFrame:
-        df = df.drop(
-            "header",
-            "products",
+        drop_cols = [
             "activityControls",
             "details",
+            "header",
+            "products",
             "subtitles",
-        )
-
-        # description
-        if "description" in df.columns:
-            df = df.drop("description")
-
-        return df
+            "titleUrl",
+        ]
+        drop_cols.append("description") if "description" in df.columns else ...
+        return df.drop(drop_cols)
 
     def initiate(self) -> pl.DataFrame:
         """
