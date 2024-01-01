@@ -23,7 +23,7 @@ async def fetch_video_details_from_yt_api(
         response = await client.get(url)
         if response.status_code == 400:
             raise HTTPException(400, {"message": "Wrong API key.", "apiKey": key})
-        elif response.status_code != 200:
+        if response.status_code != 200:
             raise HTTPException(
                 400,
                 {

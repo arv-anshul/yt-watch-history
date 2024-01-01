@@ -92,7 +92,7 @@ def __finally_get_video_details(client: httpx.Client, ids: list[str]) -> None:
         status.write("❌ **:red[No video details found in database (in the end).]**")
         status.update(label="No video details found.", expanded=True, state="error")
         st.stop()
-    with open(VIDEO_DETAILS_JSON_PATH, "w") as f:
+    with VIDEO_DETAILS_JSON_PATH.open("w") as f:
         json.dump(video_details, f)
 
 
@@ -225,7 +225,7 @@ _options = (
 sl_analysis = st.selectbox("Select Analysis", options=_options)
 sl_year = st.selectbox(
     "Select Year",
-    [None] + mdf["year"].unique().sort(descending=True).to_list(),
+    [None, *mdf["year"].unique().sort(descending=True).to_list()],
 )
 l, r = st.columns(2)
 

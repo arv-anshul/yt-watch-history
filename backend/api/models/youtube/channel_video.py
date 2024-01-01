@@ -27,10 +27,11 @@ class YtChannelVideoData(BaseModel):
     @classmethod
     def from_df(cls, df: pl.DataFrame) -> typing.Iterator[typing.Self]:
         _ = {"channelId", "channelTitle", "videoId"}
-        assert all(
-            i in df.columns for i in _
-        ), f"DataFrame must have the required columns: {list(_.difference(df.columns))}"
-
+        if all(i in df.columns for i in _):
+            raise ValueError(
+                "DataFrame must have the required columns: "
+                f"{list(_.difference(df.columns))}"
+            )
         main_df = (
             df.lazy()
             .drop_nulls("channelId")
@@ -46,5 +47,4 @@ class YtChannelVideoData(BaseModel):
             .collect()
         )
 
-        for i in main_df.iter_rows(named=True):
-            yield YtChannelVideoData(**i)
+        yield from (cls(**i) for i in main_df.iter_rows(named=True))

@@ -31,7 +31,7 @@ def load_model(
         try:
             model = CttTitleModel.load_model_dill()
         except FileNotFoundError as e:
-            raise HTTPException(404, {"error": str(e)})
+            raise HTTPException(404, {"error": str(e)}) from e
     return model
 
 

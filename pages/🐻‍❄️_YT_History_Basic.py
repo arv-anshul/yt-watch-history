@@ -143,7 +143,7 @@ def heatmap_with_pivot_table(
 
     fig = px.imshow(
         heatmap_data,
-        labels=dict(x=column.capitalize(), y=index.capitalize()),
+        labels={"x": column.capitalize(), "y": index.capitalize()},
         color_continuous_scale="YlGnBu",
         text_auto=True,
         height=700,
@@ -156,19 +156,19 @@ def heatmap_with_pivot_table(
 
     if column == "weekday":
         fig.update_layout(
-            xaxis=dict(
-                tickmode="array",
-                tickvals=np.arange(1, 8),
-                ticktext=np.array(calendar.day_name),
-            )
+            xaxis={
+                "tickmode": "array",
+                "tickvals": np.arange(1, 8),
+                "ticktext": np.array(calendar.day_name),
+            }
         )
     if index == "month":
         fig.update_layout(
-            yaxis=dict(
-                tickmode="array",
-                tickvals=np.arange(12),
-                ticktext=np.array(calendar.month_name)[1:],
-            )
+            yaxis={
+                "tickmode": "array",
+                "tickvals": np.arange(12),
+                "ticktext": np.array(calendar.month_name)[1:],
+            }
         )
 
     return fig
