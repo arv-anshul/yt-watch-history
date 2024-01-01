@@ -15,7 +15,7 @@ _TimeFreqStr = typing.Literal["weekday", "hour", "month", "year"]
 @st.cache_resource
 def get_ingested_yt_history_df() -> pl.DataFrame:
     if INGESTED_YT_HISTORY_DATA_PATH.exists():
-        return IngestYtHistory.from_ingested_data(INGESTED_YT_HISTORY_DATA_PATH)
+        return IngestYtHistory.from_ingested_data()
     else:
         st.error("Upload dataset first.", icon="✋")
         st.link_button(

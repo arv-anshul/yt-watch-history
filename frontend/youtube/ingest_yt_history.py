@@ -4,6 +4,8 @@ from pathlib import Path
 import emoji
 import polars as pl
 
+from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH
+
 
 class IngestYtHistory:
     def __init__(self, source: str | Path | IOBase) -> None:
@@ -103,8 +105,8 @@ class IngestYtHistory:
         return df
 
     @classmethod
-    def from_ingested_data(cls, path: Path | str) -> pl.DataFrame:
-        df = pl.read_json(path)
+    def from_ingested_data(cls) -> pl.DataFrame:
+        df = pl.read_json(INGESTED_YT_HISTORY_DATA_PATH)
         df = df.with_columns(
             pl.col("time").str.to_datetime(),
         )
