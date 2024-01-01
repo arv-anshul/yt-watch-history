@@ -1,9 +1,9 @@
 import json
-import os
 import re
 import string
 from dataclasses import dataclass
 from functools import cached_property
+from pathlib import Path
 
 import click
 import emoji
@@ -26,9 +26,9 @@ from sklearn.pipeline import Pipeline
 from backend.api.configs import API_HOST_URL
 from backend.ml import io
 
-CHANNELS_DATA_PATH = "data/ctt/channels_data.json"
-TITLES_DATA_PATH = "data/ctt/titles_data.json"
-MODEL_PATH = "ml_models/ctt_model"
+CHANNELS_DATA_PATH = Path("data/ctt/channels_data.json")
+TITLES_DATA_PATH = Path("data/ctt/titles_data.json")
+MODEL_PATH = Path("ml_models/ctt_model")
 CONTENT_TYPE_ENCODED = {
     "Education": 1,
     "Entertainment": 2,
@@ -59,8 +59,8 @@ CONTENT_TYPE_DECODED = {
 
 @dataclass(kw_only=True, frozen=True, eq=False)
 class CttTitleModel:
-    ctt_channels_data: str
-    titles_data: str
+    ctt_channels_data: Path
+    titles_data: Path
     model_alpha: float
     tfidf_max_features: int
     tfidf_ngram_range: tuple[int, int]
@@ -68,25 +68,22 @@ class CttTitleModel:
 
     def __fetch_data_from_database(self) -> None:
         if (
-            not os.path.exists(CHANNELS_DATA_PATH)
+            not CHANNELS_DATA_PATH.exists()
             and self.ctt_channels_data == CHANNELS_DATA_PATH
         ):
             try:
                 response = httpx.post(f"{API_HOST_URL}/db/ctt/")
-            except httpx.HTTPError:
+            except httpx.HTTPError as e:
                 raise RuntimeError(
                     f"Data not present on path {CHANNELS_DATA_PATH!r} and "
                     f"{TITLES_DATA_PATH!r}. Error while fetching data from database. "
                     "API instance is not running."
-                )
-            with open(CHANNELS_DATA_PATH, "w") as f:
+                ) from e
+            with CHANNELS_DATA_PATH.open("w") as f:
                 json.dump(response.json(), f)
-        if (
-            not os.path.exists(TITLES_DATA_PATH)
-            and self.titles_data == TITLES_DATA_PATH
-        ):
+        if not TITLES_DATA_PATH.exists() and self.titles_data == TITLES_DATA_PATH:
             response = httpx.post(f"{API_HOST_URL}/db/yt/video/all")
-            with open(TITLES_DATA_PATH, "w") as f:
+            with TITLES_DATA_PATH.open("w") as f:
                 json.dump(response.json(), f)
 
     @cached_property
@@ -103,7 +100,7 @@ class CttTitleModel:
         ctt_channels_df_req_cols = {"channelId", "contentType"}
         if not all(i in titles_df.columns for i in titles_df_req_cols):
             raise pl.ColumnNotFoundError(titles_df_req_cols - set(titles_df.columns))
-        elif not all(i in ctt_channels_df.columns for i in ctt_channels_df_req_cols):
+        if not all(i in ctt_channels_df.columns for i in ctt_channels_df_req_cols):
             raise pl.ColumnNotFoundError(
                 ctt_channels_df_req_cols - set(ctt_channels_df.columns)
             )
@@ -168,7 +165,7 @@ class CttTitleModel:
         model = self.train(df)
 
         # Log model params using mlflow
-        mlflow.log_params({i: getattr(self, i) for i in self.__annotations__.keys()})
+        mlflow.log_params({i: getattr(self, i) for i in self.__annotations__})
 
         # Log model metrices using mlflow
         scores, cm = self.model_score(model, df)
@@ -176,27 +173,29 @@ class CttTitleModel:
         mlflow.log_dict({"confusion_matrix": cm}, "confusion_matrix.json")
 
         # Log model using mlflow
-        mlflow.sklearn.log_model(model, MODEL_PATH, serialization_format="pickle")
+        mlflow.sklearn.log_model(
+            model, MODEL_PATH.as_posix(), serialization_format="pickle"
+        )
 
         if self.save_model:
             self.store_model(model)
 
     @classmethod
     def store_model(cls, model: Pipeline) -> None:
-        io.dump_object(model, MODEL_PATH + ".dill")
+        io.dump_object(model, MODEL_PATH.with_suffix(".dill"))
 
     @classmethod
     def load_model_dill(cls) -> Pipeline:
-        path = MODEL_PATH + ".dill"
-        if not os.path.exists(path):
+        path = MODEL_PATH.with_suffix(".dill")
+        if not path.exists():
             raise FileNotFoundError(f"Ctt Model not found at {path!r}")
-        (model,) = io.load_objects(path)
+        model = io.load_object(path)
         return model
 
     @classmethod
     def load_model_mlflow(cls, run_id: str) -> Pipeline:
         logged_model_path = f"runs:/{run_id}/"
-        model = mlflow.sklearn.load_model(logged_model_path + MODEL_PATH)
+        model = mlflow.sklearn.load_model(logged_model_path / MODEL_PATH)
         if model is None:
             raise MlflowException("Error while loading model with mlflow.")
         return model
@@ -208,13 +207,13 @@ class CttTitleModel:
 @click.option(
     "--ctt-channels-data",
     default=CHANNELS_DATA_PATH,
-    type=str,
+    type=click.Path(),
     help="Path to CTT channels data JSON file.",
 )
 @click.option(
     "--titles-data",
     default=TITLES_DATA_PATH,
-    type=str,
+    type=click.Path(),
     help="Path to titles data JSON file.",
 )
 @click.option(
@@ -250,8 +249,8 @@ def pipeline_for_ctt_model(
     save_model: bool,
 ):
     ctt_title = CttTitleModel(
-        ctt_channels_data=ctt_channels_data,
-        titles_data=titles_data,
+        ctt_channels_data=Path(ctt_channels_data),
+        titles_data=Path(titles_data),
         model_alpha=model_alpha,
         tfidf_max_features=tfidf_max_features,
         tfidf_ngram_range=tuple(map(int, tfidf_ngram_range.split(":"))),  # type: ignore
