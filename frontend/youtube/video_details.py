@@ -42,9 +42,21 @@ CATEGORY_ID_MAP = {
 
 
 class VideoDetails:
-    def __init__(self, path: str | None = None) -> None:
-        ingested_hist_df = pl.read_json(INGESTED_YT_HISTORY_DATA_PATH)
-        video_details_df = pl.read_json(path if path else VIDEO_DETAILS_JSON_PATH)
+    def __init__(
+        self,
+        ingested_history_data_path: str | None = None,
+        video_details_data_path: str | None = None,
+    ) -> None:
+        ingested_hist_df = pl.read_json(
+            ingested_history_data_path
+            if ingested_history_data_path
+            else INGESTED_YT_HISTORY_DATA_PATH
+        )
+        video_details_df = pl.read_json(
+            video_details_data_path
+            if video_details_data_path
+            else VIDEO_DETAILS_JSON_PATH
+        )
         category_id_df = pl.DataFrame._from_dict(CATEGORY_ID_MAP).transpose(
             include_header=True,
             header_name="categoryId",
