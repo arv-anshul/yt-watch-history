@@ -30,9 +30,11 @@ else:
                 icon="🧐",
             )
             st.stop()
+        else:
+            INGESTED_YT_HISTORY_DATA_PATH.write_bytes(df_buffer.read())
 
     with st.status("Loading the data into app...", expanded=True) as status:
-        df = IngestYtHistory(df_buffer).initiate()
+        df = IngestYtHistory().initiate()
         status.write(":green[👍 Data has been loaded.]")
 
         # Predict the videos ContentType
@@ -138,7 +140,7 @@ def heatmap_with_pivot_table(
         raise ValueError("index != column")
 
     heatmap_data = (
-        _df.pivot("titleUrl", index, column, "count", sort_columns=True)
+        _df.pivot("videoId", index, column, "count", sort_columns=True)
         .sort(index)
         .drop(index)
         .fill_null(0)

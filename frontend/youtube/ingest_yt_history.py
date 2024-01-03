@@ -1,6 +1,3 @@
-from io import IOBase
-from pathlib import Path
-
 import emoji
 import polars as pl
 
@@ -8,8 +5,8 @@ from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH
 
 
 class IngestYtHistory:
-    def __init__(self, source: str | Path | IOBase) -> None:
-        self.df = pl.read_json(source)
+    def __init__(self, path: str | None = None) -> None:
+        self.df = pl.read_json(path if path else INGESTED_YT_HISTORY_DATA_PATH)
 
     def _preprocess_data(self, df: pl.DataFrame) -> pl.DataFrame:
         df = (
@@ -24,22 +21,21 @@ class IngestYtHistory:
                 pl.col("activityControls")
                 .list.contains("YouTube watch history")
                 .alias("fromYtWatchHistActivity"),
-            )
-            .with_columns(
+                pl.col("subtitles").list.get(0),
                 pl.col("title").str.replace(r"Watched |Visited ", ""),
                 pl.col("titleUrl").str.extract(r"v=(.?*)").alias("videoId"),
             )
-            .filter(
-                # Filter videos which are removed from youtube
-                pl.col("videoId").is_not_null(),
-            )
-            .with_columns(pl.col("subtitles").list.get(0))
             .with_columns(
                 pl.col("subtitles").struct.field("name").alias("channelTitle"),
                 pl.col("subtitles")
                 .struct.field("url")
                 .str.strip_prefix("https://www.youtube.com/channel/")
                 .alias("channelId"),
+            )
+            .filter(
+                # Filter videos which are removed from youtube
+                pl.col("videoId").is_not_null(),
+                pl.col("channelId").is_not_null(),
             )
             .collect()
         )
@@ -59,24 +55,29 @@ class IngestYtHistory:
         return df
 
     def _feature_extraction(self, df: pl.DataFrame) -> pl.DataFrame:
-        # time
         df = (
             df.lazy()
             .with_columns(
-                pl.col("title").str.contains("(?i)#short").alias("isShorts"),
+                pl.col("title").str.contains(r"(?i)#short").alias("isShorts"),
                 pl.col("time").str.to_datetime(),
+                pl.col("title").str.extract_all(r"#\w+").alias("titleTags"),
+                pl.col("title")
+                .map_elements(lambda x: [e["emoji"] for e in emoji.emoji_list(x)])
+                .alias("titleEmojis"),  # List of emoji from title
             )
             .with_columns(
                 pl.col("time").dt.hour().alias("hour"),
                 pl.col("time").dt.month().alias("month"),
                 pl.col("time").dt.weekday().alias("weekday"),
                 pl.col("time").dt.year().alias("year"),
-            )
-            .with_columns(
-                pl.col("title").str.extract_all(r"#\w+").alias("titleTags"),
-                pl.col("title")
-                .map_elements(lambda x: [e["emoji"] for e in emoji.emoji_list(x)])
-                .alias("titleEmojis"),  # List of emoji from title
+                pl.col("time")
+                .dt.hour()
+                .cut(
+                    breaks=[5, 12, 17, 21],
+                    labels=["Night", "Morning", "Afternoon", "Evening", "Night"],
+                    left_closed=True,
+                )
+                .alias("daytime"),
             )
             .collect()
         )
