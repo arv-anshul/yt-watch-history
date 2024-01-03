@@ -3,7 +3,7 @@ import re
 import polars as pl
 import polars.selectors as cs
 
-from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH, VIDEO_DETAILS_JSON_PATH
+from configs import INGESTED_YT_HISTORY_DATA_PATH, VIDEO_DETAILS_JSON_PATH
 
 CATEGORY_ID_MAP = {
     "1": "Film & Animation",
