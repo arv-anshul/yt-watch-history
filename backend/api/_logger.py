@@ -1,6 +1,7 @@
 import functools
 import logging
 import os
+import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -9,7 +10,13 @@ from pathlib import Path
 def __get_log_level() -> int:
     level = os.getenv("LOG_LEVEL")
     if level is None:
-        raise ValueError("Provide 'LOG_LEVEL' variable in '.env' file.")
+        level = "INFO"
+        msg = (
+            "Provide 'LOG_LEVEL' variable in '.env' file. "
+            f"Setting default to {level!r}"
+        )
+        logging.warning(msg)
+        warnings.warn(msg, category=UserWarning, stacklevel=2)
     if level in logging._nameToLevel:
         return getattr(logging, level)
     raise ValueError(f"{level!r} is not valid log level.")

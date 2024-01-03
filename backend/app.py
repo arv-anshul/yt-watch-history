@@ -2,7 +2,6 @@ import ast
 import logging
 from contextlib import asynccontextmanager
 
-import dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
@@ -12,7 +11,6 @@ from api._logger import load_logging
 
 @asynccontextmanager
 async def main_api_lifespan(app: FastAPI):
-    dotenv.load_dotenv()
     load_logging()
     logging.debug("Starting FastAPI app instance.")
     yield
