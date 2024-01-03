@@ -1,0 +1,4 @@
+[tool.ruff]
+# pyproject.toml file in my local system
+extend = "~/Developer/pyproject.toml"
+src = ["backend", "frontend"]
