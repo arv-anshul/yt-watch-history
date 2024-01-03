@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
-from backend.api.configs import DB_NAME, YT_VIDEO_COLLECTION
-from backend.api.models.youtube import YtVideoDetails
-from backend.api.routes.db.connect import get_db_client
+from api.configs import DB_NAME, YT_VIDEO_COLLECTION
+from api.models.youtube import YtVideoDetails
+from api.routes.db.connect import get_db_client
 
 db_yt_video_route = APIRouter(prefix="/video", tags=["video"])
 

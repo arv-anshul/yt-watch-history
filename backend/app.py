@@ -6,8 +6,8 @@ import dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from backend.api import configs, routes
-from backend.api._logger import load_logging
+from api import configs, routes
+from api._logger import load_logging
 
 
 @asynccontextmanager
