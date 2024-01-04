@@ -51,8 +51,7 @@ This guide helps you set up and run this project using Docker Compose. The proje
 1. Clone the Repository:
 
    ```bash
-   git clone <repository_url>
-   cd <project_directory>
+   git clone https://github.com/arv-anshul/yt-watch-history
    ```
 
 2. Configuration:
