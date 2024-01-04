@@ -1,20 +1,22 @@
+.ONESHELL:
+
+SHELL := /bin/bash
+.DEFAULT_GOAL := help
+
 PYTHON := python3
 
-STREAMLIT_APP := README.py
-API_APP := app.py
+help:  ## Help command of Makefile
+	@$(PYTHON) <(curl -sSL https://gist.githubusercontent.com/arv-anshul/84a87b6ac9b15f51b9b8d0cdeda33f5f/raw/f48d6fa8d2e5e5769af347e8baa2677cc254c5c6/make_help_decorator.py)
 
-note:
-	code "/Users/iarv/Documents/OBSIDIAN/Learning Diary/Projects Note/YT History Analyser.md"
-
-# ---------------------------------- Project Apps ------------------------------------------
+# ---------------------------------- Project Apps ---------------------------------------
 
 .PHONY: st api
 
-st: $(STREAMLIT_APP)
-	streamlit run $<
+st:  ## Run streamlit app
+	cd frontend && streamlit run README.py
 
-api: $(API_APP)
-	$(PYTHON) $<
+api:  ## Run FastAPI instance using `python` command
+	cd backend && $(PYTHON) app.py
 
 # ---------------------------------- Git Hooks ------------------------------------------
 
