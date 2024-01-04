@@ -62,9 +62,13 @@ app.include_router(routes.ml.router)
 if __name__ == "__main__":
     import uvicorn
 
+    if not configs.API_PORT:
+        raise ValueError("Provide `API_PORT` as environment variable.")
+    if not configs.API_HOST:
+        raise ValueError("Provide 'API_HOST' as environment variable.")
+
     uvicorn.run(
         app,
         host=configs.API_HOST,
-        port=configs.API_PORT,
-        reload=configs.API_RELOAD,
+        port=int(configs.API_PORT),
     )
