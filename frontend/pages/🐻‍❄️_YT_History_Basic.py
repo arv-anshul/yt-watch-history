@@ -6,12 +6,12 @@ import polars as pl
 import streamlit as st
 from matplotlib import pyplot as plt
 from plotly import express as px
+from polars import selectors as cs
 from wordcloud import STOPWORDS, WordCloud
 
-from backend.api.configs import API_HOST_URL
-from frontend import st_utils
-from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH
-from frontend.youtube import IngestYtHistory
+import st_utils
+from configs import API_HOST_URL, INGESTED_YT_HISTORY_DATA_PATH
+from youtube import IngestYtHistory
 
 st.set_page_config("YT Watch History", "🐻‍❄", "wide")
 df = None
@@ -57,7 +57,7 @@ else:
 
         pred_df = pl.DataFrame(response.json())
         status.write(":green[🎊 Prediction compleated!]")
-        df = df.join(pred_df, on="videoId")
+        df = df.join(pred_df, on="videoId").drop(cs.ends_with("_right"))
         df.write_json(INGESTED_YT_HISTORY_DATA_PATH, row_oriented=True)
         status.update(
             label="📦 Stored ingested data as JSON.", expanded=False, state="complete"

@@ -19,12 +19,10 @@ import polars as pl
 import streamlit as st
 from plotly import express as px
 
-from backend.api._utils import batch_iter
-from backend.api.configs import API_HOST_URL
-from backend.api.models.youtube import YtChannelVideoData
-from frontend import st_utils
-from frontend.configs import VIDEO_DETAILS_JSON_PATH, YT_API_KEY
-from frontend.youtube import VideoDetails
+import st_utils
+from configs import API_HOST_URL, VIDEO_DETAILS_JSON_PATH, YT_API_KEY
+from utils import batch_iter, yt_cannel_video_data_from_df
+from youtube import VideoDetails
 
 st.set_page_config("Advance Insights", "😃", "wide", "expanded")
 DETAILS_ABOUT_PAGE = """
@@ -128,12 +126,9 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
         client,
         method="POST",
         url=f"{API_HOST_URL}/db/yt/channel/video/excludeExistingIds",
-        json=[
-            i.model_dump()
-            for i in YtChannelVideoData.from_df(
-                df.filter(pl.col("videoId").is_in(total_ids))
-            )
-        ],
+        json=list(
+            yt_cannel_video_data_from_df(df.filter(pl.col("videoId").is_in(total_ids)))
+        ),
     )
 
     # When all ids present in database

@@ -27,7 +27,7 @@ class YtChannelVideoData(BaseModel):
     @classmethod
     def from_df(cls, df: pl.DataFrame) -> typing.Iterator[typing.Self]:
         _ = {"channelId", "channelTitle", "videoId"}
-        if all(i in df.columns for i in _):
+        if not all(i in df.columns for i in _):
             raise ValueError(
                 "DataFrame must have the required columns: "
                 f"{list(_.difference(df.columns))}"

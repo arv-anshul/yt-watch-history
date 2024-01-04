@@ -4,8 +4,8 @@ from datetime import timedelta
 import polars as pl
 import streamlit as st
 
-from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH, VIDEO_DETAILS_JSON_PATH
-from frontend.youtube import IngestYtHistory
+from configs import INGESTED_YT_HISTORY_DATA_PATH, VIDEO_DETAILS_JSON_PATH
+from youtube import IngestYtHistory
 
 UPLOAD_DATASET_URL = "/YT_History_Basic"
 

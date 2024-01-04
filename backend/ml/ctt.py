@@ -23,8 +23,8 @@ from sklearn.metrics import (
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 
-from backend.api.configs import API_HOST_URL
-from backend.ml import io
+from api.configs import API_HOST_URL
+from ml import io
 
 CHANNELS_DATA_PATH = Path("data/ctt/channels_data.json")
 TITLES_DATA_PATH = Path("data/ctt/titles_data.json")

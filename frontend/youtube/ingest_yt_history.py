@@ -1,7 +1,7 @@
 import emoji
 import polars as pl
 
-from frontend.configs import INGESTED_YT_HISTORY_DATA_PATH
+from configs import INGESTED_YT_HISTORY_DATA_PATH
 
 
 class IngestYtHistory:

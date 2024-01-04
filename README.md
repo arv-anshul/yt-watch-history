@@ -22,75 +22,72 @@ This project analyzes a user's YouTube watch history data downloaded from Google
 
 ### Tech Stack
 
-|               Tech | Stack                                                                                                                                                                                                                                                          |
-| -----------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|                API | ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=fff) ![YouTube Badge](https://img.shields.io/badge/YouTube-F00?logo=youtube&logoColor=fff)                                                                                       |
-|           Database | ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=fff)                                                                                                                                                                             |
-|      Web Framework | ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=fff)                                                                                                                                                                       |
-|    Data Validation | ![Pydantic](https://img.shields.io/badge/Pydantic-E92063?logo=pydantic&logoColor=fff)                                                                                                                                                                          |
-|   Machine Learning | ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=fff) ![NLTK](https://img.shields.io/badge/NLTK-3776AB?logo=python&logoColor=fff)                                                                                  |
-|  Data Manipulation | ![pandas](https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=fff) ![Polars](https://img.shields.io/badge/Polars-CD792C?logo=polars&logoColor=fff)                                                                                                |
-| Data Visualization | ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?logo=plotly&logoColor=fff) ![Matplotlib](https://img.shields.io/badge/Matplotlib-3776AB?logo=matplotlib&logoColor=fff) ![Seaborn](https://img.shields.io/badge/Seaborn-3776AB?logo=seaborn&logoColor=fff) |
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=fff)
+![MLflow](https://img.shields.io/badge/MLflow-0194E2?logo=mlflow&logoColor=fff)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=fff)
+![NLTK](https://img.shields.io/badge/NLTK-3776AB?logo=python&logoColor=fff)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?logo=plotly&logoColor=fff)
+![Polars](https://img.shields.io/badge/Polars-CD792C?logo=polars&logoColor=fff)
+![Pydantic](https://img.shields.io/badge/Pydantic-E92063?logo=pydantic&logoColor=fff)
+![Ruff](https://img.shields.io/badge/Ruff-FCC21B?logo=ruff&logoColor=000)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=fff)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=fff)
+![YouTube Badge](https://img.shields.io/badge/YouTube-F00?logo=youtube&logoColor=fff)
 
-### Project Initialization
+## Project Setup Guide
 
-1. Clone the project repo using `git` command:
+This guide helps you set up and run this project using Docker Compose. The project consists of a frontend and backend service.
 
-```sh
-git clone https://github.com/arv-anshul/yt-watch-history
-```
+### Prerequisites
 
-2. In a virtual environment, install the required dependencies using `pip` command:
+- [🍀 MongoDB Database URL](https://mongodb.com)
+- [💥 Youtube Data v3 API Key](https://developers.google.com/youtube/v3/docs/)
+- [🐳 Docker](https://www.docker.com/get-started)
+- [🐳 Docker Compose](https://docs.docker.com/compose/install/)
 
-```sh
-pip install -r requirements.txt
-```
+### Steps to Set Up
 
-3. Run the streamlit app:
+1. Clone the Repository:
 
-```sh
-# Using streamlit command (Recommended)
-streamlit run README.py
+   ```bash
+   git clone <repository_url>
+   cd <project_directory>
+   ```
 
-# Using make command (Easy)
-make st
-```
+2. Configuration:
 
-4. Access webpage using `localhost` url:
+   - Open the `docker-compose.yml` file in the project root.
 
-```sh
-# This URL displays in your terminal
-http://localhost:8501
-```
+   - Set the following environment variables in the `frontend` service:
 
-5. Now, you can see basic insights of your **Watch History** but you can also see **Advance Insights** of your history. For that, you have to run the api.
+     - `YT_API_KEY`: Replace `null` with your YouTube API key.
+     - `API_HOST`: Should match the name of the backend service **(`backend` in this case)**.
+     - `API_PORT`: Port number for the backend service **(default is `8001`)**.
+     - `LOG_LEVEL`: Logging level **(default is `INFO`)**.
 
-### Initialize Advance Insights Process
+   - Set the following environment variables in the `backend` service:
 
-#### Prerequisite
+     - `MONGODB_URL`: Replace `null` with your MongoDB URL.
+     - `API_PORT`: Port number for the backend service **(default is `8001`)**.
+     - `API_HOST`: Set to `"0.0.0.0"`.
+     - `LOG_LEVEL`: Logging level **(default is `INFO`)**.
 
-1. [**MongoDB Database URL**](https://mongodb.com)
-2. [**Youtube Data v3 API Key**](https://developers.google.com/youtube/v3/docs/)
+3. Build and Run:
 
-#### Now, when you have all the prerequisite.
+   ```bash
+   docker-compose up --build
+   ```
 
-1. Rename `example.env` file to `.env` and fill the `MONGODB_URL` and `YT_API_KEY` parameters.
+4. Access the application:
 
-2. Run the api using terminal _(Use anyone command)_:
+   - **Frontend:** Open a browser and go to `http://localhost:8501`.
+   - **Backend:** Accessed internally via the configured API endpoints. Or access locally at `http://0.0.0.0:8001`.
 
-```sh
-# Using python command
-python app.py
-
-# Using uvicorn command
-uvicorn app:app
-
-# Using make command (Easy)
-make api
-```
-
-3. You can access the api in your local system at `localhost` url:
-
-```sh
-https://localhost:8000/
-```
+> [!NOTE]
+>
+> - Frontend service runs on port `8501` locally.
+> - Backend service runs on port `8001` locally.
+> - Make sure no other services are running on these ports.
+> - `/frontend` and `/backend` directories are mounted as volumes for the respective services.
+> - `/frontend/data` and `/backend/ml_models` directories are mounted for persistent data storage.

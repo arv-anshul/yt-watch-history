@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 from sklearn.pipeline import Pipeline
 
-from backend.api.models.ctt import ContentTypeEnum
-from backend.ml.ctt import CONTENT_TYPE_DECODED, CttTitleModel
+from api.models.ctt import ContentTypeEnum
+from ml.ctt import CONTENT_TYPE_DECODED, CttTitleModel
 
 router = APIRouter(prefix="/ctt", tags=["ctt"])
 

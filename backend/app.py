@@ -2,17 +2,15 @@ import ast
 import logging
 from contextlib import asynccontextmanager
 
-import dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from backend.api import configs, routes
-from backend.api._logger import load_logging
+from api import configs, routes
+from api._logger import load_logging
 
 
 @asynccontextmanager
 async def main_api_lifespan(app: FastAPI):
-    dotenv.load_dotenv()
     load_logging()
     logging.debug("Starting FastAPI app instance.")
     yield
@@ -64,9 +62,13 @@ app.include_router(routes.ml.router)
 if __name__ == "__main__":
     import uvicorn
 
+    if not configs.API_PORT:
+        raise ValueError("Provide `API_PORT` as environment variable.")
+    if not configs.API_HOST:
+        raise ValueError("Provide 'API_HOST' as environment variable.")
+
     uvicorn.run(
         app,
         host=configs.API_HOST,
-        port=configs.API_PORT,
-        reload=configs.API_RELOAD,
+        port=int(configs.API_PORT),
     )

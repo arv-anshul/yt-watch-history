@@ -5,7 +5,7 @@ __rough__/
 .env
 .ipynb_checkpoints/
 .venv/
-.vscode/
+# .vscode/
 *__rough__*.*
 *.arv*
 logs/

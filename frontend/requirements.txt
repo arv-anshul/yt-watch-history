@@ -1,0 +1,11 @@
+dill==0.3.7
+emoji==2.9.0
+httpx==0.25.2
+matplotlib==3.8.2
+numpy==1.26.2
+pandas==2.1.4
+plotly==5.18.0
+polars==0.20.2
+seaborn==0.13.0
+streamlit==1.29.0
+wordcloud==1.9.2

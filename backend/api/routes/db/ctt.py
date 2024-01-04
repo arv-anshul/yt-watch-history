@@ -2,8 +2,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import UpdateOne
 
-from backend.api import configs
-from backend.api.models.ctt import CttChannelData
+from api import configs
+from api.models.ctt import CttChannelData
 
 from .connect import get_db_client
 

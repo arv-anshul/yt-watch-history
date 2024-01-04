@@ -1,10 +1,10 @@
+import os
+
 from fastapi import Header
 
-# Config for development
-API_HOST = "localhost"
-API_PORT = 8000
-API_RELOAD = False
-API_HOST_URL = f"http://{API_HOST}:{API_PORT}"  # FastAPI localhost URL
+API_PORT = os.getenv("API_PORT")
+API_HOST = os.getenv("API_HOST")
+API_HOST_URL = f"http://{API_HOST}:{API_PORT}"
 
 # Database Configs
 DB_NAME = "YoutubeDB"
