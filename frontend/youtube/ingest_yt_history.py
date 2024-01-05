@@ -42,14 +42,13 @@ class IngestYtHistory:
 
         # details
         if "details" in df.columns:
-            df.select(pl.col("details").explode().unique())
             df = df.with_columns(
                 pl.col("details")
                 .list.get(0)
                 .struct.field("name")
-                .map_elements(bool)
+                .eq("From Google Ads")
                 .fill_null(False)
-                .alias("fromGoogleAds")
+                .alias("fromGoogleAds"),
             )
 
         return df
