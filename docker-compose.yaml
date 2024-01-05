@@ -17,6 +17,7 @@ services:
       API_HOST: backend # Name of backend service `backend`
       API_PORT: 8001
       LOG_LEVEL: INFO
+      STREAM_LOGS: true
 
   backend:
     build: backend
@@ -32,6 +33,7 @@ services:
       API_PORT: 8001
       API_HOST: "0.0.0.0"
       LOG_LEVEL: INFO
+      STREAM_LOGS: true
 
 volumes:
   frontend:
