@@ -28,7 +28,8 @@ from ml import io
 
 CHANNELS_DATA_PATH = Path("data/ctt/channels_data.json")
 TITLES_DATA_PATH = Path("data/ctt/titles_data.json")
-MODEL_PATH = Path("ml_models/ctt_model")
+MODEL_PATH_MLFLOW = Path("ml_models/ctt_model")
+MODEL_PATH_DILL = Path("ml_models/ctt_model.dill")
 CONTENT_TYPE_ENCODED = {
     "Education": 1,
     "Entertainment": 2,
@@ -59,39 +60,51 @@ CONTENT_TYPE_DECODED = {
 
 @dataclass(kw_only=True, frozen=True, eq=False)
 class CttTitleModel:
-    ctt_channels_data: Path
-    titles_data: Path
     model_alpha: float
     tfidf_max_features: int
     tfidf_ngram_range: tuple[int, int]
-    save_model: bool
 
-    def __fetch_data_from_database(self) -> None:
-        if (
-            not CHANNELS_DATA_PATH.exists()
-            and self.ctt_channels_data == CHANNELS_DATA_PATH
-        ):
+    @staticmethod
+    def fetch_data_from_database(*, force: bool = False) -> None:
+        if CHANNELS_DATA_PATH.exists() and TITLES_DATA_PATH.exists():
+            raise FileExistsError(
+                f"{CHANNELS_DATA_PATH} and {TITLES_DATA_PATH} already exists."
+            )
+
+        error_msg = (
+            "Error while fetching data from database. API instance is not running."
+        )
+        if not CHANNELS_DATA_PATH.exists() or force:
             try:
                 response = httpx.post(f"{API_HOST_URL}/db/ctt/")
-            except httpx.HTTPError as e:
-                raise RuntimeError(
-                    f"Data not present on path {CHANNELS_DATA_PATH!r} and "
-                    f"{TITLES_DATA_PATH!r}. Error while fetching data from database. "
-                    "API instance is not running."
-                ) from e
+            except httpx.ConnectError as e:
+                raise RuntimeError(error_msg) from e
             with CHANNELS_DATA_PATH.open("w") as f:
                 json.dump(response.json(), f)
-        if not TITLES_DATA_PATH.exists() and self.titles_data == TITLES_DATA_PATH:
-            response = httpx.post(f"{API_HOST_URL}/db/yt/video/all")
+
+        if not TITLES_DATA_PATH.exists() or force:
+            try:
+                # FIXME: Fetch only required columns used for model training from db
+                response = httpx.post(f"{API_HOST_URL}/db/yt/video/all")
+            except httpx.ConnectError as e:
+                raise RuntimeError(error_msg) from e
             with TITLES_DATA_PATH.open("w") as f:
                 json.dump(response.json(), f)
 
+    def __post_init__(self) -> None:
+        if not CHANNELS_DATA_PATH.exists():
+            raise FileNotFoundError(f"'{CHANNELS_DATA_PATH}' not exists.")
+        if not TITLES_DATA_PATH.exists():
+            raise FileNotFoundError(f"'{TITLES_DATA_PATH}' not exists.")
+
     @cached_property
     def get_df(self) -> pl.DataFrame:
-        ctt_channels_df = pl.read_json(self.ctt_channels_data)
-        titles_df = pl.read_json(self.titles_data)
+        ctt_channels_df = pl.read_json(CHANNELS_DATA_PATH)
+        titles_df = pl.read_json(TITLES_DATA_PATH)
         self._validate_df(titles_df=titles_df, ctt_channels_df=ctt_channels_df)
-        return titles_df.join(ctt_channels_df, on="channelId").unique("title")
+        merged_df = titles_df.join(ctt_channels_df, on="channelId").unique("title")
+        merged_df = self.preprocess_df(merged_df)
+        return merged_df
 
     def _validate_df(
         self, *, titles_df: pl.DataFrame, ctt_channels_df: pl.DataFrame
@@ -158,10 +171,8 @@ class CttTitleModel:
         cm = confusion_matrix(y_true, y_pred).tolist()
         return scores, cm
 
-    def initiate(self) -> None:
-        self.__fetch_data_from_database()
+    def initiate(self, *, save_model: bool) -> None:
         df = self.get_df
-        df = self.preprocess_df(df)
         model = self.train(df)
 
         # Log model params using mlflow
@@ -174,28 +185,27 @@ class CttTitleModel:
 
         # Log model using mlflow
         mlflow.sklearn.log_model(
-            model, MODEL_PATH.as_posix(), serialization_format="pickle"
+            model, MODEL_PATH_MLFLOW.as_posix(), serialization_format="pickle"
         )
 
-        if self.save_model:
+        if save_model:
             self.store_model(model)
 
     @classmethod
     def store_model(cls, model: Pipeline) -> None:
-        io.dump_object(model, MODEL_PATH.with_suffix(".dill"))
+        io.dump_object(model, MODEL_PATH_DILL)
 
     @classmethod
     def load_model_dill(cls) -> Pipeline:
-        path = MODEL_PATH.with_suffix(".dill")
-        if not path.exists():
-            raise FileNotFoundError(f"Ctt Model not found at {path!r}")
-        model = io.load_object(path)
+        if not MODEL_PATH_DILL.exists():
+            raise FileNotFoundError(f"Ctt Model not found at {MODEL_PATH_DILL!r}")
+        model = io.load_object(MODEL_PATH_DILL)
         return model
 
     @classmethod
     def load_model_mlflow(cls, run_id: str) -> Pipeline:
         logged_model_path = f"runs:/{run_id}/"
-        model = mlflow.sklearn.load_model(logged_model_path / MODEL_PATH)
+        model = mlflow.sklearn.load_model(logged_model_path / MODEL_PATH_MLFLOW)
         if model is None:
             raise MlflowException("Error while loading model with mlflow.")
         return model
@@ -203,18 +213,6 @@ class CttTitleModel:
 
 @click.command(
     help="Train CttTitleModel",
-)
-@click.option(
-    "--ctt-channels-data",
-    default=CHANNELS_DATA_PATH,
-    type=click.Path(),
-    help="Path to CTT channels data JSON file.",
-)
-@click.option(
-    "--titles-data",
-    default=TITLES_DATA_PATH,
-    type=click.Path(),
-    help="Path to titles data JSON file.",
 )
 @click.option(
     "--model-alpha",
@@ -241,24 +239,19 @@ class CttTitleModel:
     help="Flag to save ML model using mlflow.",
 )
 def pipeline_for_ctt_model(
-    ctt_channels_data: str,
-    titles_data: str,
     model_alpha: float,
     tfidf_max_features: int,
     tfidf_ngram_range: str,
     save_model: bool,
 ):
     ctt_title = CttTitleModel(
-        ctt_channels_data=Path(ctt_channels_data),
-        titles_data=Path(titles_data),
         model_alpha=model_alpha,
         tfidf_max_features=tfidf_max_features,
         tfidf_ngram_range=tuple(map(int, tfidf_ngram_range.split(":"))),  # type: ignore
-        save_model=save_model,
     )
 
     with mlflow.start_run():
-        ctt_title.initiate()
+        ctt_title.initiate(save_model=save_model)
 
 
 if __name__ == "__main__":
