@@ -1,7 +1,6 @@
 import calendar
 
 import httpx
-import numpy as np
 import polars as pl
 import streamlit as st
 from matplotlib import pyplot as plt
@@ -69,6 +68,7 @@ else:
 
 # Button to delete all the user's data
 st_utils.delete_user_data_button()
+CAPTION = st.sidebar.toggle("Plots Caption", True)
 
 _options = [
     "Basic Info About Your History Data",
@@ -130,71 +130,73 @@ if sl_analysis == _options[0]:
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 # Watch Time Insights
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-@st.cache_resource
-def heatmap_with_pivot_table(
-    _df: pl.DataFrame,
-    index: st_utils._TimeFreqStr,
-    column: st_utils._TimeFreqStr,
-):
-    if index == column:
-        raise ValueError("index != column")
-
-    heatmap_data = (
-        _df.pivot("videoId", index, column, "count", sort_columns=True)
-        .sort(index)
-        .drop(index)
-        .fill_null(0)
-    )
-
-    fig = px.imshow(
-        heatmap_data,
-        labels={"x": column.capitalize(), "y": index.capitalize()},
-        color_continuous_scale="YlGnBu",
-        text_auto=True,
-        height=700,
-        aspect="auto",
-    )
-    fig.update_layout(
-        title_x=0.33,
-        title_text=f"Video Watching Patterns Over {index.capitalize()} and {column.capitalize()}",
-    )
-
-    if column == "weekday":
-        fig.update_layout(
-            xaxis={
-                "tickmode": "array",
-                "tickvals": np.arange(1, 8),
-                "ticktext": np.array(calendar.day_name),
-            }
-        )
-    if index == "month":
-        fig.update_layout(
-            yaxis={
-                "tickmode": "array",
-                "tickvals": np.arange(12),
-                "ticktext": np.array(calendar.month_name)[1:],
-            }
-        )
-
-    return fig
-
-
 if sl_analysis == _options[1]:
-    _freq_opt = [
-        ("hour", "weekday"),
-        ("hour", "year"),
-        ("month", "weekday"),
-        ("month", "year"),
-        ("year", "weekday"),
-        ("month", "hour"),
-    ]
-    sl_opt = st.selectbox(
-        "Select Time Frequency Combination ⏰",
-        _freq_opt,
-        format_func=lambda x: "  —  ".join(x).title(),
+    st.divider()
+
+    L, R = st.columns(2)
+    sl_year = L.selectbox(
+        "Select Year",
+        [None, *df["time"].dt.year().unique().sort()],
+        format_func=lambda x: x if x else "All",
     )
-    fig = heatmap_with_pivot_table(df, *sl_opt)  # type: ignore
+    sl_month = R.selectbox(
+        "Select Month",
+        [None, *range(1, 13)],
+        format_func=lambda x: calendar.month_name[x] if x else "All",
+    )
+    st.divider()
+
+    filter_queries = []
+    if sl_year:
+        filter_queries.append(pl.col("time").dt.year().eq(sl_year))
+    if sl_month:
+        filter_queries.append(pl.col("time").dt.month().eq(sl_month))
+    if not filter_queries:
+        filter_queries.append(True)
+
+    fig = px.bar(
+        (
+            df.filter(filter_queries)
+            .group_by("contentTypePred", "daytime")
+            .count()
+            .sort("count", descending=True)
+        ),
+        x="contentTypePred",
+        y="count",
+        color="daytime",
+        labels={"contentTypePred": "Videos Content Type", "count": "Video Count"},
+        title="Count of videos watched in each Content Type (Stacked with daytime)",
+    )
     st.plotly_chart(fig, True)
+    if CAPTION:
+        st.caption(
+            "A grouped bar chart showcasing the top video content types, while "
+            "color-coded by time of day. Reveals the most prevalent content types "
+            "across different times, offering insights into popular video categories "
+            "and their distribution throughout the day."
+        )
+    st.divider()
+
+    L, R = st.columns(2)
+    fig = px.sunburst(
+        (
+            df.filter(filter_queries)
+            .group_by("contentTypePred", "daytime", "channelTitle")
+            .count()
+            .filter(pl.col("count").gt(20 if not sl_month else 1))
+        ),
+        path=["contentTypePred", "channelTitle", "daytime"],
+        values="count",
+        title="User's watching behavior during contentTypePred",
+    )
+    L.plotly_chart(fig, True)
+    if CAPTION:
+        L.caption(
+            "Sunburst chart displaying significant content type distribution across "
+            "channels and time of day, highlighting content types , providing insights "
+            "into popular content categories, channel engagement, and viewing patterns "
+            "throughout the day. Constraints with (count > 20)."
+        )
 
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
