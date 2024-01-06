@@ -102,9 +102,15 @@ if sl_analysis == _options[0]:
         )
         .row(0),
         names=["Frequently Watched Channel (>=7)", "Non Freq. Channel [2,6]"],
-        title=f"% of channels you watches frequently [{threshold=}]",
+        title="% of channels you watches frequently",
     )
     l.plotly_chart(fig, True)
+    if CAPTION:
+        l.caption(
+            "A pie chart showing the distribution of frequently watched channels and "
+            "less watched channels, categorized by the no. of videos being watched. "
+            "Offering an overview of the user's channel engagement pattern."
+        )
 
     # Count Of Video Watched From Different Activity
     temp = df.select(
@@ -116,6 +122,10 @@ if sl_analysis == _options[0]:
         title="Count of videos you have watched from different activity",
     )
     r.plotly_chart(fig, True)
+    if CAPTION:
+        r.caption(
+            "Chart visualizes the count of videos watched based on different activities."
+        )
 
     # Top 7 Channel
     fig = px.bar(
@@ -125,7 +135,12 @@ if sl_analysis == _options[0]:
         title="Top 7 channels you have watched",
     )
     st.plotly_chart(fig, True)
-
+    if CAPTION:
+        st.caption(
+            "Bar chart displaying the top 7 channels user have watched based on the "
+            "count of videos viewed from each channel. Provides a quick overview of "
+            "user's most frequently visited channels."
+        )
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 # Watch Time Insights
@@ -225,6 +240,14 @@ if sl_analysis == _options[2]:
     plt.axis("off")
     plt.title("WorlCloud of Words in Videos Title")
     st.pyplot(fig, True)
+    if CAPTION:
+        st.caption(
+            "It analyzes video title data, (excluding shorts videos), visualize the "
+            "most prominent words in video titles using a WordCloud. The resulting "
+            "visualization offers insights into prevalent words used across video "
+            "titles, aiding in understanding common topics which user watches."
+        )
+    st.divider()
 
     # WordCloud of titleTags
     tags_text = " ".join(
@@ -241,6 +264,11 @@ if sl_analysis == _options[2]:
     plt.axis("off")
     plt.title("WordCloud of Tags in Titles")
     st.pyplot(fig, True)
+    if CAPTION:
+        st.caption(
+            "WordCloud offers an insight of the most common tags used in video titles, "
+            "aiding in understanding prevalent themes or topics user watches."
+        )
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
 # ContentType Models Overview
@@ -255,6 +283,13 @@ if sl_analysis == _options[3]:
         title="Different ContentType Consumption",
     )
     l.plotly_chart(fig, True)
+    if CAPTION:
+        l.caption(
+            "Shows distribution of different content types based on their consumption. "
+            "Each slice represents a content type, and its size corresponds to the "
+            "count of that particular content type consumed. Offers an overview of the "
+            "diversity in content types watched by the user."
+        )
 
     fig = px.sunburst(
         df.drop_nulls("channelTitle")
@@ -266,3 +301,10 @@ if sl_analysis == _options[3]:
         title="Consumption of Content Type with Channel",
     )
     r.plotly_chart(fig, True)
+    if CAPTION:
+        r.caption(
+            "Shows the consumption of content types across various channels. Chart's "
+            "layers showcase the hierarchy: from content types to individual channels, "
+            "highlighting the consumption count. Offers insights about user that which "
+            "channels he/she consider for specific content type."
+        )
