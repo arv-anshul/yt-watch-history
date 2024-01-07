@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import Final
 
 from fastapi import Header
 
 from errors import ENVNotFoundError
-
-if TYPE_CHECKING:
-    from typing import Final
 
 API_PORT: Final[str] = os.getenv("API_PORT")  # type: ignore
 API_HOST: Final[str] = os.getenv("API_HOST")  # type: ignore

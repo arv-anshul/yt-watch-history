@@ -1,10 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter, Depends, HTTPException
-from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
 from api.configs import DB_NAME, YT_VIDEO_COLLECTION
 from api.models.youtube import YtVideoDetails
 from api.routes.db.connect import get_db_client
+
+if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorCollection
+
 
 db_yt_video_route = APIRouter(prefix="/video", tags=["video"])
 
@@ -37,7 +44,7 @@ async def get_yt_videos_details(
 ) -> list[YtVideoDetails]:
     details = await collection.find({"id": {"$in": ids}}).to_list(None)
     if details:
-        return [YtVideoDetails(**i) for i in details]
+        return details
     raise HTTPException(404, {"message": "Details not found in database.", "id": ids})
 
 
@@ -50,7 +57,7 @@ async def update_videos_details(
     details: list[YtVideoDetails],
     force_update: bool = False,
     collection: AsyncIOMotorCollection = Depends(get_collection),
-) -> None:
+):
     existing_videos = await collection.find(
         {"id": {"$in": [i.id for i in details]}}
     ).to_list(None)

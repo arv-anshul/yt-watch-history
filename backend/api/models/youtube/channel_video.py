@@ -1,9 +1,11 @@
-import typing
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterator, Self
 
 import polars as pl
 from pydantic import BaseModel
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from api.models.youtube import YtVideoDetails
 
 
@@ -13,9 +15,7 @@ class YtChannelVideoData(BaseModel):
     videoIds: list[str]
 
     @classmethod
-    def from_video_details(
-        cls, details: list["YtVideoDetails"]
-    ) -> typing.Iterator[typing.Self]:
+    def from_video_details(cls, details: list[YtVideoDetails]) -> Iterator[Self]:
         if len(details) == 0:
             raise ValueError("Empty list of details provided.")
 
@@ -25,7 +25,7 @@ class YtChannelVideoData(BaseModel):
         yield from cls.from_df(df)
 
     @classmethod
-    def from_df(cls, df: pl.DataFrame) -> typing.Iterator[typing.Self]:
+    def from_df(cls, df: pl.DataFrame) -> Iterator[Self]:
         main_df = (
             df.lazy()
             .drop_nulls("channelId")

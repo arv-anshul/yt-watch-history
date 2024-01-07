@@ -1,7 +1,11 @@
-from pathlib import Path
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import dill
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def dump_object(obj: Any, path: Path) -> None:

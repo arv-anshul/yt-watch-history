@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import UpdateOne
 
 from api import configs
@@ -7,10 +10,14 @@ from api.models.ctt import CttChannelData
 
 from .connect import get_db_client
 
+if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorCollection
+
+
 router = APIRouter(prefix="/ctt", tags=["ctt"])
 
 
-def get_collection():
+def get_collection() -> AsyncIOMotorCollection:
     client = get_db_client()
     collection = client[configs.DB_CTT][configs.COLLECTION_CTT_CHANNELS]
     return collection

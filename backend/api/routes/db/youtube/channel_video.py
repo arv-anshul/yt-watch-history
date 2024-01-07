@@ -1,14 +1,19 @@
-import typing
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterable
 
 import polars as pl
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo import InsertOne, UpdateOne
 
 from api.configs import DB_NAME, YT_CHANNEL_VIDEO_COLLECTION
 from api.models.youtube import YtChannelVideoData
 from api.models.youtube.video import YtVideoDetails
 from api.routes.db.connect import get_db_client
+
+if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorCollection
+
 
 db_yt_channel_video_route = APIRouter(
     prefix="/channel/video",
@@ -39,7 +44,7 @@ async def get_channels_videos_data(
 
 
 async def __update_channels_videos_data(
-    data: typing.Iterable[YtChannelVideoData],
+    data: Iterable[YtChannelVideoData],
     collection: AsyncIOMotorCollection,
 ) -> None:
     existing_channels = await collection.find(
@@ -77,7 +82,7 @@ async def update_channels_videos_data(
     data: list[YtChannelVideoData],
     bg_tasks: BackgroundTasks,
     collection: AsyncIOMotorCollection = Depends(get_collection),
-) -> None:
+):
     if data:
         bg_tasks.add_task(__update_channels_videos_data, data, collection)
 
@@ -91,7 +96,7 @@ async def update_using_videos_details(
     data: list[YtVideoDetails],
     bg_tasks: BackgroundTasks,
     collection: AsyncIOMotorCollection = Depends(get_collection),
-) -> None:
+):
     if data:
         ch_video_data = list(YtChannelVideoData.from_video_details(data))
         bg_tasks.add_task(__update_channels_videos_data, ch_video_data, collection)

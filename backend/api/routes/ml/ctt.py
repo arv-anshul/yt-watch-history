@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import functools
 import logging
-from pathlib import Path  # noqa: TCH003
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import polars as pl
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from api.models.ctt import ContentTypeEnum  # noqa: TCH001
+from api.models.ctt import ContentTypeEnum
 from ml.ctt import (
     CHANNELS_DATA_PATH,
     CONTENT_TYPE_DECODED,

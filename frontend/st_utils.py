@@ -1,5 +1,7 @@
-import typing
+from __future__ import annotations
+
 from datetime import timedelta
+from typing import Literal
 
 import polars as pl
 import streamlit as st
@@ -9,7 +11,7 @@ from youtube import IngestYtHistory
 
 UPLOAD_DATASET_URL = "/YT_History_Basic"
 
-_TimeFreqStr = typing.Literal["weekday", "hour", "month", "year"]
+_TimeFreqStr = Literal["weekday", "hour", "month", "year"]
 
 
 @st.cache_resource

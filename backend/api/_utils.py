@@ -1,8 +1,10 @@
-import typing
+from __future__ import annotations
+
 from itertools import islice
+from typing import Iterable, Iterator
 
 
-def batch_iter(iterable: typing.Iterable, n: int, /) -> typing.Iterator:
+def batch_iter(iterable: Iterable, n: int, /) -> Iterator:
     """
     Iterator function that batches items from an iterator.
 

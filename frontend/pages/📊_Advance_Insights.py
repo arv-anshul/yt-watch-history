@@ -10,9 +10,11 @@
 ###### 🤩 Now, show the Advance Insights by merging both datasets.
 """
 
+from __future__ import annotations
+
 import json
-import typing
 from io import BytesIO
+from typing import Any, NoReturn
 
 import httpx
 import numpy as np
@@ -44,7 +46,7 @@ df = st_utils.get_ingested_yt_history_df()
 
 
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- #
-def set_status_as_error(__r: httpx.Response, /) -> typing.NoReturn:
+def set_status_as_error(__r: httpx.Response, /) -> NoReturn:
     try:
         message = __r.json()["error"]
     except json.JSONDecodeError:
@@ -61,10 +63,10 @@ def set_status_as_error(__r: httpx.Response, /) -> typing.NoReturn:
 def __request(
     client: httpx.Client,
     *,
-    method: typing.LiteralString,
+    method: str,
     url: str,
     **kwargs,
-) -> typing.Any | None:
+) -> Any | None:
     try:
         r = client.request(method, url, **kwargs)
     except httpx.ConnectError:
