@@ -12,6 +12,7 @@
 
 import json
 import typing
+from io import BytesIO
 
 import httpx
 import numpy as np
@@ -21,7 +22,7 @@ from plotly import express as px
 
 import st_utils
 from configs import API_HOST_URL, VIDEO_DETAILS_JSON_PATH, YT_API_KEY
-from utils import batch_iter, yt_cannel_video_data_from_df
+from utils import batch_iter
 from youtube import VideoDetails
 
 st.set_page_config("Advance Insights", "😃", "wide", "expanded")
@@ -62,11 +63,10 @@ def __request(
     *,
     method: typing.LiteralString,
     url: str,
-    headers: dict | None = None,
-    json: typing.Any = None,
+    **kwargs,
 ) -> typing.Any | None:
     try:
-        r = client.request(method, url, headers=headers, json=json)
+        r = client.request(method, url, **kwargs)
     except httpx.ConnectError:
         status.write("**:red[Check your network and make sure the API is running.]**")
         status.update(
@@ -122,13 +122,16 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     client = httpx.Client(timeout=10)
 
     # excludeVideoIds which are present in database
+    data_for_request = BytesIO()
+    df.filter(pl.col("videoId").is_in(total_ids)).write_json(
+        data_for_request, row_oriented=True
+    )
+    data_for_request.seek(0)
     filtered_ids = __request(
         client,
         method="POST",
-        url=f"{API_HOST_URL}/db/yt/channel/video/excludeExistingIds",
-        json=list(
-            yt_cannel_video_data_from_df(df.filter(pl.col("videoId").is_in(total_ids)))
-        ),
+        url=f"{API_HOST_URL}/db/yt/channel/video/excludeExistingIds/frame",
+        files={"data": data_for_request},
     )
 
     # When all ids present in database
