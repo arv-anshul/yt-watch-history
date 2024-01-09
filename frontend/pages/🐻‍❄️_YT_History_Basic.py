@@ -40,7 +40,7 @@ else:
         status.write(":orange[🤔 Predicting the videos ContentType.]")
         try:
             response = httpx.post(
-                f"{API_HOST_URL}/ml/ctt/",
+                f"{API_HOST_URL}/ml/ctt/predict",
                 json=df.select("title", "videoId").to_dicts(),
             )
         except httpx.ConnectError:

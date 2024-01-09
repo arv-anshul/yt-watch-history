@@ -57,7 +57,7 @@ def predict_with_df(*, df: pl.DataFrame, model: Pipeline) -> pl.DataFrame:
 
 
 @router.post(
-    "/",
+    "/predict",
     description="Make prediction using list of JSON data.",
     response_model=list[PredictionOut],
 )
@@ -71,7 +71,7 @@ async def predict_many(
 
 
 @router.post(
-    "/file",
+    "/predict/file",
     description="Make prediction using JSON file.",
     response_description="Download the JSON file which includes the predicted contentType.",
 )
