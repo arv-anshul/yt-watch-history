@@ -9,12 +9,12 @@ import polars as pl
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
+from api.configs import COLLECTION_CTT_CHANNELS, DB_NAME, YT_VIDEO_COLLECTION
 from api.models.ctt import ContentTypeEnum
+from api.routes.db.connect import get_db_client
 from ml.ctt import (
-    CHANNELS_DATA_PATH,
     CONTENT_TYPE_DECODED,
     MODEL_PATH_DILL,
-    TITLES_DATA_PATH,
     CttTitleModel,
 )
 
@@ -22,6 +22,39 @@ if TYPE_CHECKING:
     from sklearn.pipeline import Pipeline
 
 router = APIRouter(prefix="/ctt", tags=["ctt"])
+
+
+@router.get(
+    "/data",
+    description="Fetch titles data for CttTitleModel training from database.",
+)
+async def get_training_data_from_db():
+    pipeline = [
+        {
+            "$lookup": {
+                "from": COLLECTION_CTT_CHANNELS,
+                "localField": "channelId",
+                "foreignField": "channelId",
+                "as": "joinedObj",
+            },
+        },
+        {
+            "$unwind": {
+                "path": "$joinedObj",
+            },
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "channelId": 1,
+                "contentType": "$joinedObj.contentType",
+                "title": 1,
+            },
+        },
+    ]
+    collection = get_db_client()[DB_NAME][YT_VIDEO_COLLECTION]
+    data = collection.aggregate(pipeline).to_list(None)
+    return await data
 
 
 class PredictionIn(BaseModel):
@@ -93,23 +126,6 @@ async def store_logged_model(
 ) -> None:
     model = CttTitleModel.load_model_mlflow(run_id)
     CttTitleModel.store_model(model)
-
-
-@router.get(
-    "/fetchTrainingDataFromDb",
-    description=(
-        "Fetches data for CttTitleModel training from database. It will save data at "
-        "the specified path."
-    ),
-)
-async def fetch_data_for_training(
-    force: bool = False,
-):
-    CttTitleModel.fetch_data_from_database(force=force)
-    return {
-        "channelsDataPath": CHANNELS_DATA_PATH.as_uri(),
-        "titlesDataPath": TITLES_DATA_PATH.as_uri(),
-    }
 
 
 class ModelsParams(BaseModel):

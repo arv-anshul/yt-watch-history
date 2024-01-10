@@ -1,4 +1,3 @@
-import json
 import re
 import string
 from dataclasses import dataclass
@@ -26,8 +25,7 @@ from sklearn.pipeline import Pipeline
 from api.configs import API_HOST_URL
 from ml import io
 
-CHANNELS_DATA_PATH = Path("data/ctt/channels_data.json")
-TITLES_DATA_PATH = Path("data/ctt/titles_data.json")
+CTT_TRAINING_DATA_PATH = Path("../data/ctt/training.json")
 MODEL_PATH_MLFLOW = Path("ml_models/ctt_model")
 MODEL_PATH_DILL = Path("ml_models/ctt_model.dill")
 CONTENT_TYPE_ENCODED = {
@@ -65,64 +63,52 @@ class CttTitleModel:
     tfidf_ngram_range: tuple[int, int]
 
     @staticmethod
-    def fetch_data_from_database(*, force: bool = False) -> None:
-        if CHANNELS_DATA_PATH.exists() and TITLES_DATA_PATH.exists():
-            raise FileExistsError(
-                f"{CHANNELS_DATA_PATH} and {TITLES_DATA_PATH} already exists."
+    def fetch_training_data_from_db(*, timeout: int = 10) -> None:
+        if CTT_TRAINING_DATA_PATH.exists():
+            raise FileExistsError(f"{CTT_TRAINING_DATA_PATH!r} already exists.")
+
+        try:
+            res = httpx.get(f"{API_HOST_URL}/ml/ctt/data", timeout=timeout)
+        except httpx.ConnectError as e:
+            raise RuntimeError(
+                "Error while fetching data from database. API instance not running."
+            ) from e
+        except httpx.TimeoutException as e:
+            e.add_note("Pass 'timeout' parameter.")
+            raise
+
+        if res.is_success:
+            CTT_TRAINING_DATA_PATH.write_bytes(res.read())  # Dump JSON
+        else:
+            raise httpx.HTTPStatusError(
+                f"[{res.status_code}] Status code not promising.",
+                request=res.request,
+                response=res,
             )
 
-        error_msg = (
-            "Error while fetching data from database. API instance is not running."
-        )
-        if not CHANNELS_DATA_PATH.exists() or force:
-            try:
-                response = httpx.post(f"{API_HOST_URL}/db/ctt/")
-            except httpx.ConnectError as e:
-                raise RuntimeError(error_msg) from e
-            with CHANNELS_DATA_PATH.open("w") as f:
-                json.dump(response.json(), f)
-
-        if not TITLES_DATA_PATH.exists() or force:
-            try:
-                # FIXME: Fetch only required columns used for model training from db
-                response = httpx.post(f"{API_HOST_URL}/db/yt/video/all")
-            except httpx.ConnectError as e:
-                raise RuntimeError(error_msg) from e
-            with TITLES_DATA_PATH.open("w") as f:
-                json.dump(response.json(), f)
-
     def __post_init__(self) -> None:
-        if not CHANNELS_DATA_PATH.exists():
-            raise FileNotFoundError(f"'{CHANNELS_DATA_PATH}' not exists.")
-        if not TITLES_DATA_PATH.exists():
-            raise FileNotFoundError(f"'{TITLES_DATA_PATH}' not exists.")
+        if not CTT_TRAINING_DATA_PATH.exists():
+            raise FileNotFoundError(f"{CTT_TRAINING_DATA_PATH!r} not exists.")
 
     @cached_property
     def get_df(self) -> pl.DataFrame:
-        ctt_channels_df = pl.read_json(CHANNELS_DATA_PATH)
-        titles_df = pl.read_json(TITLES_DATA_PATH)
-        self._validate_df(titles_df=titles_df, ctt_channels_df=ctt_channels_df)
-        merged_df = titles_df.join(ctt_channels_df, on="channelId").unique("title")
-        merged_df = self.preprocess_df(merged_df)
-        return merged_df
+        train_df = pl.read_json(CTT_TRAINING_DATA_PATH)
+        self._validate_df(train_df)
+        return train_df
 
-    def _validate_df(
-        self, *, titles_df: pl.DataFrame, ctt_channels_df: pl.DataFrame
-    ) -> None:
-        titles_df_req_cols = {"channelId", "title"}
-        ctt_channels_df_req_cols = {"channelId", "contentType"}
-        if not all(i in titles_df.columns for i in titles_df_req_cols):
-            raise pl.ColumnNotFoundError(titles_df_req_cols - set(titles_df.columns))
-        if not all(i in ctt_channels_df.columns for i in ctt_channels_df_req_cols):
+    def _validate_df(self, train_df: pl.DataFrame) -> None:
+        req_cols = {"channelId", "contentType", "title"}
+        if not all(i in train_df.columns for i in req_cols):
             raise pl.ColumnNotFoundError(
-                ctt_channels_df_req_cols - set(ctt_channels_df.columns)
+                "Ctt model training data must contains columns %s"
+                % (req_cols - set(train_df.columns))
             )
 
-    def preprocess_df(self, df: pl.DataFrame) -> pl.DataFrame:
-        df = df.with_columns(
+    def preprocess_df(self, train_df: pl.DataFrame) -> pl.DataFrame:
+        train_df = train_df.with_columns(
             pl.col("contentType").replace(CONTENT_TYPE_ENCODED),
         )
-        return df
+        return train_df
 
     def text_preprocessor(self, s: str):
         """Preprocessor for Vectorizer"""
