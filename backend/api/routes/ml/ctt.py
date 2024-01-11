@@ -14,6 +14,7 @@ from api.models.ctt import ContentTypeEnum
 from api.routes.db.connect import get_db_client
 from ml.ctt import (
     CONTENT_TYPE_DECODED,
+    CTT_TRAINING_DATA_PATH,
     MODEL_PATH_DILL,
     CttTitleModel,
 )
@@ -128,14 +129,27 @@ async def store_logged_model(
     CttTitleModel.store_model(model)
 
 
+class ModelTrainingDataConfig(BaseModel):
+    fetch: bool = False
+    overwrite: bool = False
+    timeoutToFetchData: int = 10
+
+
 class ModelsParams(BaseModel):
     modelAlpha: float = Field(default=0.01, gt=0)
     tfidfMaxFeatures: int = Field(default=7000, gt=2000)
     tfidfNgramRange: tuple[int, int] = (1, 1)
 
 
+class ModelTrainingConfig(BaseModel):
+    logWithMLFlow: bool = False
+    overwrite: bool = False
+
+
 class ModelTrainingIn(BaseModel):
+    modelTrainingConfig: ModelTrainingConfig
     modelParams: ModelsParams
+    trainingDataConfig: ModelTrainingDataConfig
 
 
 class ModelTrainingOut(BaseModel):
@@ -155,12 +169,16 @@ class ModelTrainingOut(BaseModel):
 )
 async def train_ctt_model(
     data: ModelTrainingIn,
-    overwrite: bool = False,
-    log: bool = False,
     # TODO: 1a. Accept MLFlow URI from header or post data (if log is True)
 ) -> ModelTrainingOut:
-    if overwrite is False and MODEL_PATH_DILL.exists():
+    if data.modelTrainingConfig.overwrite is False and MODEL_PATH_DILL.exists():
         raise HTTPException(400, {"error": "Model already exists at path."})
+    if data.trainingDataConfig.fetch:
+        if data.trainingDataConfig.overwrite:
+            CTT_TRAINING_DATA_PATH.unlink(True)
+        CttTitleModel.fetch_training_data_from_db(
+            timeout=data.trainingDataConfig.timeoutToFetchData
+        )
 
     ctt_obj = CttTitleModel(
         model_alpha=data.modelParams.modelAlpha,
@@ -170,7 +188,7 @@ async def train_ctt_model(
 
     train_df = ctt_obj.get_df
     train_df = ctt_obj.preprocess_df(train_df)
-    if log:
+    if data.modelTrainingConfig.logWithMLFlow:
         ctt_obj.initiate(save_model=True)
         model = ctt_obj.load_model_dill()
     else:
@@ -186,5 +204,5 @@ async def train_ctt_model(
         scores=scores,
         confusion_matrix=cm,
         modelPath=MODEL_PATH_DILL.resolve(True),
-        isModelLogged=log,
+        isModelLogged=data.modelTrainingConfig.logWithMLFlow,
     )
