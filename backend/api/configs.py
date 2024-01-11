@@ -16,8 +16,6 @@ MONGODB_URL: Final[str] = os.getenv("MONGODB_URL")  # type: ignore
 DB_NAME: Final = "YoutubeDB"
 YT_VIDEO_COLLECTION: Final = "YtVideosData"
 YT_CHANNEL_VIDEO_COLLECTION: Final = "YtChannelVidData"
-
-DB_CTT: Final = "CttDB"
 COLLECTION_CTT_CHANNELS: Final = "CttChannelsData"
 
 # YouTube API configs
