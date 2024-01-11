@@ -13,10 +13,10 @@ API_HOST_URL: Final = f"http://{API_HOST}:{API_PORT}"
 
 # Database Configs
 MONGODB_URL: Final[str] = os.getenv("MONGODB_URL")  # type: ignore
-DB_NAME: Final = "YoutubeDB"
-YT_VIDEO_COLLECTION: Final = "YtVideosData"
-YT_CHANNEL_VIDEO_COLLECTION: Final = "YtChannelVidData"
-COLLECTION_CTT_CHANNELS: Final = "CttChannelsData"
+DB_YOUTUBE: Final = "YoutubeDB"
+COLLECTION_YT_VIDEO: Final = "YtVideosDetails"
+COLLECTION_YT_CHANNEL_VIDEO: Final = "YtChannelsVideoIds"
+COLLECTION_CTT_CHANNELS: Final = "CttChannels"
 
 # YouTube API configs
 YT_API_KEY_AS_API_HEADER = Header(

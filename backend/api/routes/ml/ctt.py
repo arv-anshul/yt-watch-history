@@ -9,7 +9,7 @@ import polars as pl
 from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from api.configs import COLLECTION_CTT_CHANNELS, DB_NAME, YT_VIDEO_COLLECTION
+from api.configs import COLLECTION_CTT_CHANNELS, COLLECTION_YT_VIDEO, DB_YOUTUBE
 from api.models.ctt import ContentTypeEnum
 from api.routes.db.connect import get_db_client
 from ml.ctt import (
@@ -53,7 +53,7 @@ async def get_training_data_from_db():
             },
         },
     ]
-    collection = get_db_client()[DB_NAME][YT_VIDEO_COLLECTION]
+    collection = get_db_client()[DB_YOUTUBE][COLLECTION_YT_VIDEO]
     data = collection.aggregate(pipeline).to_list(None)
     return await data
 

@@ -6,7 +6,7 @@ import polars as pl
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from pymongo import InsertOne, UpdateOne
 
-from api.configs import DB_NAME, YT_CHANNEL_VIDEO_COLLECTION
+from api.configs import COLLECTION_YT_CHANNEL_VIDEO, DB_YOUTUBE
 from api.models.youtube import YtChannelVideoData
 from api.models.youtube.video import YtVideoDetails
 from api.routes.db.connect import get_db_client
@@ -22,7 +22,7 @@ db_yt_channel_video_route = APIRouter(
 
 
 async def get_collection() -> AsyncIOMotorCollection:
-    collection = get_db_client()[DB_NAME][YT_CHANNEL_VIDEO_COLLECTION]
+    collection = get_db_client()[DB_YOUTUBE][COLLECTION_YT_CHANNEL_VIDEO]
     return collection
 
 

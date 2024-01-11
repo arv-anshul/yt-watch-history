@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo import InsertOne, UpdateOne
 
-from api.configs import DB_NAME, YT_VIDEO_COLLECTION
+from api.configs import COLLECTION_YT_VIDEO, DB_YOUTUBE
 from api.models.youtube import YtVideoDetails
 from api.routes.db.connect import get_db_client
 
@@ -17,7 +17,7 @@ db_yt_video_route = APIRouter(prefix="/video", tags=["video"])
 
 
 async def get_collection() -> AsyncIOMotorCollection:
-    collection = get_db_client()[DB_NAME][YT_VIDEO_COLLECTION]
+    collection = get_db_client()[DB_YOUTUBE][COLLECTION_YT_VIDEO]
     return collection
 
 
