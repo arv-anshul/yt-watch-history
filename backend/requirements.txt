@@ -1,6 +1,7 @@
 dill==0.3.7
 emoji==2.9.0
 fastapi==0.108.0
+gunicorn==21.2.0
 httpx==0.26.0
 mlflow==2.9.2
 motor==3.3.2

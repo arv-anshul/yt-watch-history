@@ -11,6 +11,7 @@ from api.logger import load_logging
 
 @asynccontextmanager
 async def main_api_lifespan(app: FastAPI):
+    configs.check_setup_settings()
     load_logging()
     logging.debug("Starting FastAPI app instance.")
     yield
