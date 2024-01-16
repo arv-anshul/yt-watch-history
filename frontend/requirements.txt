@@ -7,5 +7,5 @@ pandas==2.1.4
 plotly==5.18.0
 polars==0.20.3
 seaborn==0.13.0
-streamlit==1.29.0
+streamlit==1.30.0
 wordcloud==1.9.2
