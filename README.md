@@ -20,6 +20,10 @@ This project analyzes a user's YouTube watch history data downloaded from Google
 - Track your progress towards achieving your YouTube goals.
 - Make informed decisions about your YouTube consumption.
 
+### Project's Notebooks
+
+If you want to see my 📓 notebooks where I have done some interesting analysis on the datasets which I have used in this project then you can se them in my [**@arv-anshul/notebooks**](https://github.com/arv-anshul/notebooks/tree/main/yt-watch-history) github repository.
+
 ### Tech Stack
 
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
