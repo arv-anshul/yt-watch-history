@@ -27,7 +27,7 @@ from ml import io
 
 CTT_TRAINING_DATA_PATH = Path("../data/ctt/training.json")
 MODEL_PATH_MLFLOW = Path("ml_models/ctt_model")
-MODEL_PATH_DILL = Path("ml_models/ctt_model.dill")
+MODEL_PATH_DILL = Path("../data/ml_models/ctt_model.dill")
 CONTENT_TYPE_ENCODED = {
     "Education": 1,
     "Entertainment": 2,

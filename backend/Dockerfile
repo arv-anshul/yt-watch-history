@@ -1,10 +1,10 @@
 FROM python:3.11-slim
 
-WORKDIR /backend
+WORKDIR /app/backend
 
 RUN pip install -U pip
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY . .
 
