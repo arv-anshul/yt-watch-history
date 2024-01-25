@@ -1,6 +1,6 @@
 import polars as pl
 
-from api_utils import make_request_to_api
+from utils import make_request_to_api
 
 from ..configs import CH_RECO_DATA_PATH
 

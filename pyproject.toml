@@ -15,7 +15,7 @@ homepage = "https://github.com/arv-anshul/yt-watch-history"
 
 [tool.ruff]
 target-version = "py311"
-src = ["backend", "frontend"]
+src = ["ml", "backend", "frontend"]
 
 [tool.ruff.lint]
 extend-ignore = ["E501", "E741"]
