@@ -2,20 +2,18 @@ import logging
 
 import httpx
 
-from api.configs import API_HOST_URL
-
 
 def make_request_to_api(
     *,
     method: str,
-    endpoint: str,
+    url: str,
     timeout: int = 5,
     **kwargs_for_request,
-) -> str | bytes | dict:
+) -> bytes:
     try:
         res = httpx.request(
             method,
-            f"{API_HOST_URL}{endpoint}",
+            url,
             timeout=timeout,
             **kwargs_for_request,
         )
@@ -26,7 +24,7 @@ def make_request_to_api(
         raise
 
     if not res.is_success:
-        error_msg = f"[{res.status_code}]:{method}:{endpoint!r}"
+        error_msg = f"[{res.status_code}]:{method}:{url!r}"
         logging.error(error_msg)
         raise httpx.HTTPStatusError(error_msg, request=res.request, response=res)
 
