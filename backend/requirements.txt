@@ -1,11 +1,10 @@
+# Included the ml libraries because while importing the models it is required.
 dill==0.3.7
 emoji==2.9.0
 fastapi==0.108.0
 gunicorn==21.2.0
 httpx==0.26.0
-mlflow==2.9.2
 motor==3.3.2
-nltk==3.8.1
 numpy==1.26.3
 pandas==2.1.4
 polars==0.20.3
