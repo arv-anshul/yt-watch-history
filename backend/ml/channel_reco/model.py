@@ -43,6 +43,6 @@ def get_vectorizer() -> ColumnTransformer:
         [
             ("title_trf", title_transformer, "title"),
             ("tags_trf", tags_transformer, "tags"),
-        ]
+        ],
     )
     return transformer
