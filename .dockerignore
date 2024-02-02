@@ -1,0 +1,17 @@
+# Custom arv-anshul ignore snippet
+__pycache__/
+__rough__/
+.docker
+.DS_Store
+.env
+.ipynb_checkpoints/
+.venv/
+.vscode/
+*__rough__*.*
+*.arv
+*.arv.*
+*.log
+*.pyc
+arv.*
+docker-compose.yml
+Dockerfile
