@@ -18,6 +18,17 @@ st:  ## Run streamlit app
 api:  ## Run FastAPI instance using `python` command
 	cd backend && $(PYTHON) app.py
 
+# ------------------------- Code Linting && Formatting ---------------------------------
+
+lint:  ## Run `ruff` linter
+	@ruff .
+
+lint-fix:  ## Fix the "fixable" lintin errors
+	@ruff . --fix
+
+format:  ## Format with `ruff`
+	@ruff format .
+
 # ---------------------------------- Git Hooks ------------------------------------------
 
 PRE_COMMIT_YAML := .pre-commit-config.yaml
