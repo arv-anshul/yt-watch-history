@@ -1,6 +1,6 @@
 [project]
 name = "yt-watch-history"
-version = '0.0.0'
+version = '0.1.0'
 description = "Analyzes user's YouTube watch history data and show plots in streamlit web app."
 requires-python = ">=3.11"
 authors = [{ name = "Anshul Raj Verma", email = "arv.anshul.1864@gmail.com" }]
