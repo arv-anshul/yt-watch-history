@@ -1,17 +1,16 @@
-# This project do not use pyproject.toml as project setup file
-# This toml file is just to understand the project description
-# However, ``ruff`` (linter & formatter) uses this file as config file
-
 [project]
 name = "yt-watch-history"
 version = '0.0.0'
 description = "Analyzes user's YouTube watch history data and show plots in streamlit web app."
+requires-python = ">=3.11"
 authors = [{ name = "Anshul Raj Verma", email = "arv.anshul.1864@gmail.com" }]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 
 [project.urls]
 homepage = "https://github.com/arv-anshul/yt-watch-history"
+repository = "https://github.com/arv-anshul/yt-watch-history"
+documents = "https://arv-anshul.github.io/projects/yt-watch-history"
 
 [tool.ruff]
 target-version = "py311"
