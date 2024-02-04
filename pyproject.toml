@@ -15,10 +15,48 @@ homepage = "https://github.com/arv-anshul/yt-watch-history"
 
 [tool.ruff]
 target-version = "py311"
+show-fixes = true
 src = ["backend", "frontend"]
 
 [tool.ruff.lint]
-extend-ignore = ["E501", "E741"]
+extend-select = [
+    "B",
+    "BLE",
+    "C4",
+    "C90",
+    "E",
+    "F",
+    "I",
+    "ICN",
+    "INP",
+    "ISC",
+    "PGH",
+    "PIE",
+    "PTH",
+    "Q",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "TCH",
+    "UP",
+    "W",
+    "YTT",
+]
+extend-ignore = [
+    "B008",
+    "B905",
+    "E501",
+    "E741",
+    "INP001",
+    "ISC001",
+    "N818",
+    "PGH003",
+    "S101",
+    "S301",
+    "UP035",
+]
+extend-unfixable = ["B", "F401"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402", "F401"]
