@@ -84,9 +84,7 @@ def __request(
 
 def __finally_get_video_details(client: httpx.Client, ids: list[str]) -> None:
     status.write(":green[Finally fetching all videos details.]")
-    video_details = __request(
-        client, method="POST", url=f"{API_HOST_URL}/db/yt/video/", json=ids
-    )
+    video_details = __request(client, method="POST", url="/db/yt/video/", json=ids)
     if not video_details:
         status.write("❌ **:red[No video details found in database (in the end).]**")
         status.update(label="No video details found.", expanded=True, state="error")
@@ -120,7 +118,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     total_ids = st_utils.get_frequent_ids(df, last_n_days=int(last_n_days))
     total_ids_count = len(total_ids)  # Store count of total ids
     status = st.status("Fetching Data using API key...", expanded=True)
-    client = httpx.Client(timeout=10)
+    client = httpx.Client(base_url=API_HOST_URL, timeout=10)
 
     # excludeVideoIds which are present in database
     data_for_request = BytesIO()
@@ -131,7 +129,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     filtered_ids = __request(
         client,
         method="POST",
-        url=f"{API_HOST_URL}/db/yt/channel/video/excludeExistingIds/frame",
+        url="/db/yt/channel/video/excludeExistingIds/frame",
         files={"data": data_for_request},
     )
 
@@ -153,7 +151,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
         v = __request(
             client,
             method="POST",
-            url=f"{API_HOST_URL}/yt/video/?n=400",
+            url="/yt/video/?n=400",
             json=batch,
             headers={"YT-API-KEY": api_key},
         )
@@ -178,7 +176,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
         __pbar.progress(
             __nums[i], ":blue[Storing details in a batch of 200 into database.]"
         )
-        __request(client, method="PUT", url=f"{API_HOST_URL}/db/yt/video/", json=batch)
+        __request(client, method="PUT", url="/db/yt/video/", json=batch)
     else:
         __pbar.empty()
     status.write(":blue[All Details stored in database.]")
@@ -187,7 +185,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     __request(
         client,
         method="PUT",
-        url=f"{API_HOST_URL}/db/yt/channel/video/usingVideosDetails",
+        url="/db/yt/channel/video/usingVideosDetails",
         json=videos_details,
     )
     status.write("Channel videos data stored in database.")
