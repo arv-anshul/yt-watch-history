@@ -5,6 +5,9 @@ SHELL := /bin/bash
 
 PYTHON := python3
 
+# Create a .env file where you can define all the evironments variables
+include .env
+
 help:  ## Help command of Makefile
 	@$(PYTHON) <(curl -sSL https://gist.githubusercontent.com/arv-anshul/84a87b6ac9b15f51b9b8d0cdeda33f5f/raw/f48d6fa8d2e5e5769af347e8baa2677cc254c5c6/make_help_decorator.py)
 
@@ -13,10 +16,21 @@ help:  ## Help command of Makefile
 .PHONY: st api
 
 st:  ## Run streamlit app
-	cd frontend && streamlit run README.py
+	@cd frontend && \
+	API_PORT=${API_PORT} \
+	API_HOST=${API_HOST} \
+	LOG_LEVEL=${LOG_LEVEL} \
+	STREAM_LOGS=${STREAM_LOGS} \
+	streamlit run README.py
 
 api:  ## Run FastAPI instance using `python` command
-	cd backend && $(PYTHON) app.py
+	@cd backend && \
+	API_PORT=${API_PORT} \
+	API_HOST=${API_HOST} \
+	LOG_LEVEL=${LOG_LEVEL} \
+	STREAM_LOGS=${STREAM_LOGS} \
+	MONGODB_URL=${MONGODB_URL} \
+	$(PYTHON) app.py
 
 # ------------------------- Code Linting && Formatting ---------------------------------
 
