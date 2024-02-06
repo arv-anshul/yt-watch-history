@@ -24,7 +24,6 @@ from plotly import express as px
 
 import st_utils
 from configs import API_HOST_URL, VIDEO_DETAILS_JSON_PATH, YT_API_KEY
-from utils import batch_iter
 from youtube import VideoDetails
 
 st.set_page_config("Advance Insights", "😃", "wide", "expanded")
@@ -147,7 +146,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     videos_details = []
     __nums = np.linspace(0, 1, (len(filtered_ids) // 400) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(filtered_ids, 400)):
+    for i, batch in enumerate(st_utils.batch_iter(filtered_ids, 400)):
         __pbar.progress(
             __nums[i], ":blue[Fecting videos details using YouTube API in batches.]"
         )
@@ -175,7 +174,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     status.write(":green[Connecting to database...]")
     __nums = np.linspace(0, 1, (len(videos_details) // 200) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(videos_details, 200)):
+    for i, batch in enumerate(st_utils.batch_iter(videos_details, 200)):
         __pbar.progress(
             __nums[i], ":blue[Storing details in a batch of 200 into database.]"
         )
