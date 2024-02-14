@@ -6,11 +6,41 @@ requires-python = ">=3.11"
 authors = [{ name = "Anshul Raj Verma", email = "arv.anshul.1864@gmail.com" }]
 license = "MIT"
 readme = "README.md"
+dependencies = [
+    "dill==0.3.8",
+    "emoji==2.10.1",
+    "fastapi==0.109.2",
+    "gunicorn==21.2.0",
+    "httpx==0.26.0",
+    "matplotlib==3.8.2",
+    "motor==3.3.2",
+    "numpy==1.26.4",
+    "pandas==2.2.0",
+    "plotly==5.18.0",
+    "polars==0.20.8",
+    "pymongo==4.6.1",
+    "python-multipart==0.0.9",
+    "scikit-learn==1.4.0",
+    "seaborn==0.13.2",
+    "streamlit==1.31.1",
+    "uvicorn==0.27.1",
+    "wordcloud==1.9.3",
+]
 
 [project.urls]
 homepage = "https://github.com/arv-anshul/yt-watch-history"
 repository = "https://github.com/arv-anshul/yt-watch-history"
 documents = "https://arv-anshul.github.io/projects/yt-watch-history"
+
+[project.optional-dependencies]
+ml = ["mlflow==2.10.2"]
+
+[tool.rye]
+managed = true
+# rye does not support optional deps in virtual project
+# https://github.com/mitsuhiko/rye/issues/639
+virtual = true
+dev-dependencies = []
 
 [tool.ruff]
 target-version = "py311"
