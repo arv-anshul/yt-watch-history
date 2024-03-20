@@ -24,7 +24,6 @@ from plotly import express as px
 
 import st_utils
 from configs import API_HOST_URL, VIDEO_DETAILS_JSON_PATH, YT_API_KEY
-from utils import batch_iter
 from youtube import VideoDetails
 
 st.set_page_config("Advance Insights", "😃", "wide", "expanded")
@@ -85,9 +84,7 @@ def __request(
 
 def __finally_get_video_details(client: httpx.Client, ids: list[str]) -> None:
     status.write(":green[Finally fetching all videos details.]")
-    video_details = __request(
-        client, method="POST", url=f"{API_HOST_URL}/db/yt/video/", json=ids
-    )
+    video_details = __request(client, method="POST", url="/db/yt/video/", json=ids)
     if not video_details:
         status.write("❌ **:red[No video details found in database (in the end).]**")
         status.update(label="No video details found.", expanded=True, state="error")
@@ -121,7 +118,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     total_ids = st_utils.get_frequent_ids(df, last_n_days=int(last_n_days))
     total_ids_count = len(total_ids)  # Store count of total ids
     status = st.status("Fetching Data using API key...", expanded=True)
-    client = httpx.Client(timeout=10)
+    client = httpx.Client(base_url=API_HOST_URL, timeout=10)
 
     # excludeVideoIds which are present in database
     data_for_request = BytesIO()
@@ -132,7 +129,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     filtered_ids = __request(
         client,
         method="POST",
-        url=f"{API_HOST_URL}/db/yt/channel/video/excludeExistingIds/frame",
+        url="/db/yt/channel/video/excludeExistingIds/frame",
         files={"data": data_for_request},
     )
 
@@ -147,14 +144,14 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     videos_details = []
     __nums = np.linspace(0, 1, (len(filtered_ids) // 400) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(filtered_ids, 400)):
+    for i, batch in enumerate(st_utils.batch_iter(filtered_ids, 400)):
         __pbar.progress(
             __nums[i], ":blue[Fecting videos details using YouTube API in batches.]"
         )
         v = __request(
             client,
             method="POST",
-            url=f"{API_HOST_URL}/yt/video/?n=400",
+            url="/yt/video/?n=400",
             json=batch,
             headers={"YT-API-KEY": api_key},
         )
@@ -175,11 +172,11 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     status.write(":green[Connecting to database...]")
     __nums = np.linspace(0, 1, (len(videos_details) // 200) + 1)
     __pbar = status.empty()
-    for i, batch in enumerate(batch_iter(videos_details, 200)):
+    for i, batch in enumerate(st_utils.batch_iter(videos_details, 200)):
         __pbar.progress(
             __nums[i], ":blue[Storing details in a batch of 200 into database.]"
         )
-        __request(client, method="PUT", url=f"{API_HOST_URL}/db/yt/video/", json=batch)
+        __request(client, method="PUT", url="/db/yt/video/", json=batch)
     else:
         __pbar.empty()
     status.write(":blue[All Details stored in database.]")
@@ -188,7 +185,7 @@ if not VIDEO_DETAILS_JSON_PATH.exists():
     __request(
         client,
         method="PUT",
-        url=f"{API_HOST_URL}/db/yt/channel/video/usingVideosDetails",
+        url="/db/yt/channel/video/usingVideosDetails",
         json=videos_details,
     )
     status.write("Channel videos data stored in database.")

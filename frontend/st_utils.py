@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Literal
+from itertools import islice
+from typing import Iterable, Iterator, Literal
 
 import polars as pl
 import streamlit as st
@@ -66,3 +67,7 @@ def delete_user_data_button():
 
         # Rerun the app
         st.rerun()
+
+
+def batch_iter(iterable: Iterable, n: int, /) -> Iterator:
+    yield from (list(islice(iterable, i, i + n)) for i in range(0, len(iterable), n))  # type: ignore
