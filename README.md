@@ -2,6 +2,15 @@
 
 This project analyzes a user's YouTube watch history data downloaded from Google Takeout. It provides insights into watch patterns, content preferences, and overall YouTube consumption.
 
+> \[!IMPORTANT\]
+>
+> This was my first project where I explored MLOps concepts like FastAPI, Docker, and MLFlow.
+> As the project grew in complexity, I found it challenging to maintain a clear development track.
+>
+> Therefore, I've decided to archive this version and rebuild it from scratch with a renewed focus on organization and maintainability.
+>
+> New project repo [**@arv-anshul/yt-watch-history-v2**](https://github.com/arv-anshul/yt-wach-history-v2)
+
 ### Getting Your YouTube History Data
 
 1. Go to the Google Takeout website: [Google Takeout](https://takeout.google.com/)
