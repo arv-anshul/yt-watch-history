@@ -9,7 +9,7 @@ This project analyzes a user's YouTube watch history data downloaded from Google
 >
 > Therefore, I've decided to archive this version and rebuild it from scratch with a renewed focus on organization and maintainability.
 >
-> New project repo [**@arv-anshul/yt-watch-history-v2**](https://github.com/arv-anshul/yt-wach-history-v2)
+> New project repo [**@arv-anshul/yt-watch-history-v2**](https://github.com/arv-anshul/yt-watch-history-v2)
 
 ### Getting Your YouTube History Data
 
